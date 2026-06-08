@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "jest"],
+    "module": "CommonJS",
+    // "moduleResolution": "Node",
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "strictPropertyInitialization": false,
+    "allowJs": false,
+    "declaration": true,
+    "sourceMap": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@order/*": ["./src/module/order/*"],
+      "@user/*": ["./src/module/user/*"],
+      "@test/*": ["./test/*"]
+    },
+    "outDir": "./example2/dist"
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "./dist"]
+}
