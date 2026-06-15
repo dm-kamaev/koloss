@@ -16,17 +16,28 @@ build: check_ts
 	npx tsc
 
 
+down:
+	docker compose down;
+
+
+file=
 test:
-	npx jest
-
-test_coverage:
-	npx jest --coverage
+	docker compose run --remove-orphans backend npx jest $(file)
 
 
-# create_user:
-# 	curl -X POST http://127.0.0.1:4005/user  -H "Content-Type: application/json" \
-# 	 -d '{ "first_name": "Ivan", "last_name": "Ivanov"}' \
-# 	 | jq
+test.watch:
+	docker compose run --remove-orphans backend  npx jest $(file) --watchAll
+
+
+test.coverage:
+	docker compose run --remove-orphans backend npx jest --coverage
+
+# test:middle:
+# 	docker-compose run backend npx jest --verbose test/middle_level
+
+# test:middle.watch:
+# 	docker-compose run backend npx jest --verbose --watchAll test/middle_level
+
 
 # ================== API ==================
 # make api.user_get user_id=1234
@@ -45,6 +56,6 @@ order_id=
 api.order_get:
 	curl -X GET http://127.0.0.1:4005/order/$(order_id) | jq
 
-# ================== API ==================
+# ================== END API ==================
 
 .PHONY: test

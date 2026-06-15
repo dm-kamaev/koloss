@@ -4,16 +4,20 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc && tsc-alias"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "7.29.7",
+    "@babel/preset-env": "7.29.7",
     "@types/jest": "29.5.3",
     "@types/node": "^25.9.1",
     "@typescript-eslint/eslint-plugin": "7.0.2",
     "@typescript-eslint/parser": "7.0.2",
+    "babel-jest": "30.4.1",
     "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-new-with-error": "4.0.0",
@@ -24,12 +28,17 @@
     "fastify": "4.21.0",
     "jest": "30.4.2",
     "madge": "6.1.0",
+    "pg-transactional-tests": "1.2.0",
     "prettier": "3.2.5",
     "ts-jest": "^29.4.11",
     "ts-node": "10.8.0",
+    "tsc-alias": "1.8.17",
     "tsx": "4.19.2"
   },
   "dependencies": {
+    "kysely": "0.29.2",
+    "pg": "8.21.0",
+    "tsconfig-paths": "4.2.0",
     "zod": "4.4.3"
   }
 }

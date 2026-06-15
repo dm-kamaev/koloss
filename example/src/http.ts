@@ -38,7 +38,7 @@ function setupErrorHandler(app: FastifyInstance) {
 }
 
 function startServer(app: FastifyInstance) {
-  app.listen({ port: 4005 }, async function (err, address) {
+  app.listen({ port: 4005, host: '0.0.0.0' }, async function (err, address) {
     if (err) {
       throw err;
     }

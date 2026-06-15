@@ -1,4 +1,7 @@
+import { pgConnect } from '@/core/pg/pg.instance';
+import { OrdersTable, SchemaDB } from '@/core/pg/pg.type';
 import { Order, OrderWithPrice } from '../entity/order.entity';
+import { Selectable } from 'kysely';
 
 export interface OrderProductRaw {
   name: string;
@@ -15,63 +18,82 @@ export interface OrderRaw {
   updatedAt: Date;
 }
 
-const oneDayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
+type OrderSelectable = Selectable<OrdersTable>;
 
-// global store, emulation Database
-const ORDERS: OrderRaw[] = [
-  { id: 1, userId: 1234, products: [{ name: 'Apple', amount: 1, price: 10 }], status: 'completed', updatedAt: oneDayAgo, price: 10 },
-  { id: 2, userId: 1234, products: [{ name: 'Orange', amount: 2, price: 20 }], status: 'pending', updatedAt: new Date(), price: 40 },
-  { id: 3, userId: 2, products: [{ name: 'Banana', amount: 3, price: 5 }], status: 'completed', updatedAt: new Date(), price: 15 },
-  { id: 4, userId: 1, products: [{ name: 'Milk', amount: 4, price: 15 }], status: 'archived', updatedAt: oneDayAgo, price: 60 },
-];
+function fromDb(order: OrderSelectable): OrderRaw {
+  return {
+    id: order.id,
+    userId: order.user_id,
+    products: order.products,
+    price: Number(order.price),
+    status: order.status,
+    updatedAt: order.updated_at,
+  };
+}
 
 export class OrderDb {
-  constructor(protected readonly _orders = ORDERS) {}
+  private readonly db: SchemaDB;
+
+  constructor() {
+    this.db = pgConnect.create();
+  }
 
   async getById(orderId: number): Promise<OrderRaw> {
-    const order = this._orders.find(({ id }) => id === orderId);
+    const order = await this.db.selectFrom('orders').selectAll().where('id', '=', orderId).executeTakeFirst();
+
     if (!order) {
       throw new Error(`Not found order with id: ${orderId}`);
     }
-    return order;
+    return fromDb(order);
   }
 
   async getCountByUserId(userId: number): Promise<number> {
-    const userOrders = this._orders.filter((order) => order.userId === userId);
-    return userOrders.length;
+    const result = await this.db
+      .selectFrom('orders')
+      .select(({ fn }) => [fn.count<string>('id').as('count')])
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+
+    return Number(result?.count ?? 0);
   }
 
   async create(orderData: { userId: number; products: OrderProductRaw[] }): Promise<OrderRaw> {
-    const newId = this._orders.length > 0 ? Math.max(...this._orders.map((o) => o.id)) + 1 : 1;
-    const order = new (OrderWithPrice(Order, orderData.products))(newId);
+    const order = new (OrderWithPrice(Order, orderData.products))(0); // temp id for price calculation
 
-    const newOrder: OrderRaw = {
-      id: newId,
-      userId: orderData.userId,
-      products: orderData.products,
-      price: order.price,
-      status: 'pending',
-      updatedAt: new Date(),
-    };
+    const newOrder = await this.db
+      .insertInto('orders')
+      .values({
+        user_id: orderData.userId,
+        products: JSON.stringify(orderData.products),
+        price: order.price,
+        status: 'pending',
+        updated_at: new Date().toISOString(),
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
 
-    this._orders.push(newOrder);
-
-    return newOrder;
+    return fromDb(newOrder);
   }
 
   async findCompletedOlderThan(date: Date): Promise<OrderRaw[]> {
-    const filteredOrders = this._orders.filter((order) => {
-      return order.status === 'completed' && order.updatedAt < date;
-    });
-    return filteredOrders;
+    const orders = await this.db
+      .selectFrom('orders')
+      .selectAll()
+      .where('status', '=', 'completed')
+      .where('updated_at', '<', date)
+      .execute();
+
+    return orders.map(fromDb);
   }
 
   async archive(orderId: number): Promise<void> {
-    console.log('HERE', orderId);
-    const order = await this.getById(orderId);
-    if (order) {
-      order.status = 'archived';
-      order.updatedAt = new Date();
-    }
+    await this.db
+      .updateTable('orders')
+      .set({
+        status: 'archived',
+        updated_at: new Date().toISOString(),
+      })
+      .where('id', '=', orderId)
+      .execute();
   }
 }

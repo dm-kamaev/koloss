@@ -1,28 +1,18 @@
 import { NotFound } from '@/core/error/not_found.error';
+import { SchemaDB, UsersTable } from '@/core/pg/pg.type';
+import { pgConnect } from '@/core/pg/pg.instance';
 
-export interface UserRow {
-  id: number;
-  name: string;
-  last_name: string;
-  email: string;
-}
+export type UserRow = UsersTable;
 
 export class UserDb {
-  private _users: UserRow[];
+  private readonly db: SchemaDB;
 
-  constructor(users?: UserRow[]) {
-    this._users = users || [
-      {
-        id: 1234,
-        name: 'Vasya',
-        last_name: 'Ivanov',
-        email: 'test@example.com',
-      },
-    ];
+  constructor() {
+    this.db = pgConnect.create();
   }
-
   async getById(userId: number) {
-    const user = this._users.find(({ id }) => id === userId);
+    const user = await this.db.selectFrom('users').selectAll().where('id', '=', userId).executeTakeFirst();
+
     if (!user) {
       throw new NotFound(`User not found with id = ${userId}`);
     }
@@ -31,7 +21,8 @@ export class UserDb {
   }
 
   async existWithId(userId: number) {
-    const user = this._users.find(({ id }) => id === userId);
+    const user = await this.db.selectFrom('users').select('id').where('id', '=', userId).executeTakeFirst();
+
     return Boolean(user);
   }
 }

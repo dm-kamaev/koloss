@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: .
+      target: development # Docker to stop at Stage 1 for dev/testing
+    container_name: koloss_backend
+    ports:
+      - '4005:4005'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      TZ: 'Europe/Moscow'
+      DB_HOST: 'pg'
+      DB_PORT: '5432'
+      DB_USER: 'koloss'
+      DB_PASSWORD: 'example'
+      DB_NAME: 'koloss'
+    command: node dist/src/http.js
+    depends_on:
+      - pg
+
+  pg:
+    image: 'postgres:17-alpine'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: 'koloss'
+      POSTGRES_USER: 'koloss'
+      POSTGRES_PASSWORD: 'example'
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
