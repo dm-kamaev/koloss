@@ -23,7 +23,7 @@ function OrderSuccessArchiveInputDto(args: string[]) {
     },
   };
 }
-export async function orderSuccessArchive({
+export async function orderSuccessArchiveCli({
   userCommunicator,
   args = process.argv,
   OrderSuccessArchive,

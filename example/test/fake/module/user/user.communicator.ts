@@ -1,6 +1,6 @@
 import { UserCommunicator } from '@/module/user/user.communicator';
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserDbFake } from './repository/user.db';
+import { UserDbInMemoryFake } from './repository/user.db.fake.in_memory';
 import { User, UserWithEmail, UserWithOrdersCount } from '@/module/user/entity/user.entity';
 
 // import { IUserCommunicator } from '@/communicator/user.communicator.type';
@@ -42,7 +42,7 @@ export class UserCommunicatorFake extends UserCommunicator {
   }
 
   getUserById(_userId: number) {
-    const { id, email } = UserDbFake.defaultUser;
+    const { id, email } = UserDbInMemoryFake.defaultUser;
     const orderCounts = 1;
 
     const UserEntity = UserWithOrdersCount(UserWithEmail(User, email), orderCounts);

@@ -1,18 +1,14 @@
-import { orderSuccessArchive } from '@/module/order/cli/order_success_archive.cli';
+import { orderSuccessArchiveCli } from '@/module/order/cli/order_success_archive.cli';
 import { OrderSuccessArchive } from '@/module/order/action/order_success_archive.action';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { z } from 'zod';
-import { OrderDb } from '@/module/order/repository/order.db';
-import { createClassStub } from '@/lib_test';
 import { pgConnect } from '@/core/pg/pg.instance';
-import { SchemaDB } from '@/core/pg/pg.type';
 
 describe('CLI: orderSuccessArchive', () => {
-  const db: SchemaDB = pgConnect.create();
+  const db = pgConnect.create();
 
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -29,17 +25,11 @@ describe('CLI: orderSuccessArchive', () => {
     const date = new Date().toISOString();
     const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', date];
 
-    const orderDb = new OrderDb();
-    const userCommunicator = new AppCommunicatorFake().user;
-    const orderSuccessArchiveAction = new OrderSuccessArchive(userCommunicator, orderDb);
-
-    const OrderSuccessArchiveStub = createClassStub(OrderSuccessArchive).mockImplementation(() => orderSuccessArchiveAction);
-
     // Act
-    const result = await orderSuccessArchive({
-      userCommunicator,
+    const result = await orderSuccessArchiveCli({
+      userCommunicator: new AppCommunicatorFake().user,
       args,
-      OrderSuccessArchive: OrderSuccessArchiveStub,
+      OrderSuccessArchive,
     });
 
     // Assert
@@ -56,34 +46,38 @@ describe('CLI: orderSuccessArchive', () => {
     // depending on the exact execution time, this could be 'completed' or 'archived', so we don't assert it.
     // A better test would be to control the `updated_at` time in the database.
   });
+});
+
+describe('CLI: orderSuccessArchive [Validation]', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   it('should throw a ZodError for an invalid date format', async () => {
     const invalidDate = 'not-a-date';
     const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', invalidDate];
-    const userCommunicator = new AppCommunicatorFake().user;
-
-    const OrderSuccessArchiveCtor = createClassStub(OrderSuccessArchive);
 
     await expect(
-      orderSuccessArchive({
-        userCommunicator,
+      orderSuccessArchiveCli({
+        userCommunicator: new AppCommunicatorFake().user,
         args,
-        OrderSuccessArchive: OrderSuccessArchiveCtor,
+        OrderSuccessArchive,
       }),
     ).rejects.toThrow(z.ZodError);
   });
 
   it('should throw a ZodError if date is missing (now required)', async () => {
     const args = ['node', 'src/cli.ts', 'orderSuccessArchive'];
-    const userCommunicator = new AppCommunicatorFake().user;
-
-    const OrderSuccessArchiveCtor = createClassStub(OrderSuccessArchive);
 
     await expect(
-      orderSuccessArchive({
-        userCommunicator,
+      orderSuccessArchiveCli({
+        userCommunicator: new AppCommunicatorFake().user,
         args,
-        OrderSuccessArchive: OrderSuccessArchiveCtor,
+        OrderSuccessArchive,
       }),
     ).rejects.toThrow(z.ZodError);
   });

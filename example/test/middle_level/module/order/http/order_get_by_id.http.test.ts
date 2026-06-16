@@ -1,13 +1,11 @@
-import { orderGetById } from '@/module/order/http/order_get_by_id.http';
+import { orderGetByIdHttp } from '@/module/order/http/order_get_by_id.http';
 import { OrderGetById } from '@/module/order/action/order_get_by_id.action';
-import { OrderDb } from '@/module/order/repository/order.db';
 import { createApp } from '@/http';
-import { createClassStub } from '@/lib_test';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { FastifyInstance } from 'fastify';
 import { pgConnect } from '@/core/pg/pg.instance';
-import { UserDbFake } from '@test/fake/module/user/repository/user.db';
-import { OrderDbFake } from '@test/fake/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.fake.in_memory';
+import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
 
 describe('HTTP Order Get By Id', () => {
   let app: FastifyInstance;
@@ -23,17 +21,10 @@ describe('HTTP Order Get By Id', () => {
   });
 
   it('should return an order with user information and status 200', async () => {
-    const app = createApp();
-
-    const orderDb = new OrderDb();
-
-    const userCommunicator = new AppCommunicatorFake().user;
-    const orderGetByIdAction = new OrderGetById(userCommunicator, orderDb);
-
-    orderGetById({
+    orderGetByIdHttp({
       app,
-      OrderGetById: createClassStub(OrderGetById).mockImplementation(() => orderGetByIdAction),
-      userCommunicator,
+      OrderGetById,
+      userCommunicator: new AppCommunicatorFake().user,
     });
 
     const response = await app.inject({
@@ -46,6 +37,6 @@ describe('HTTP Order Get By Id', () => {
     const body = response.json();
 
     expect(body.id).toBe(OrderDbFake.defaultOrder.id);
-    expect(body.user.id).toEqual(UserDbFake.defaultUser.id);
+    expect(body.user.id).toEqual(UserDbInMemoryFake.defaultUser.id);
   });
 });

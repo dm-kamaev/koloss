@@ -21,7 +21,7 @@ const OrderCreateInputBodyDto = z.object({
 
 type OrderCreateBody = z.infer<typeof OrderCreateInputBodyDto>;
 
-export function orderCreate({
+export function orderCreateHttp({
   app,
   OrderCreate,
   userCommunicator,
@@ -44,15 +44,19 @@ export function orderCreate({
 
     const user = await order.getUser();
 
-    reply.status(201).send({
-      id: order.id,
-      price: order.price,
-      countProducts: order.countProducts,
-      updatedAt: order.updatedAt,
-      user: {
-        id: user.id,
-        email: user.email,
-      },
-    });
+    try {
+      reply.status(201).send({
+        id: order.id,
+        price: order.price,
+        countProducts: order.countProducts,
+        updatedAt: order.updatedAt,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+      });
+    } catch (error) {
+      console.log('HERE', error);
+    }
   });
 }

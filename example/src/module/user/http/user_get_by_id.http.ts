@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
 import { UserGetByIdCtor } from '../action/user_get_by_id.action';
 
-export function userGetById({
+export function userGetByIdHttp({
   app,
   UserGetById,
   orderCommunicator,

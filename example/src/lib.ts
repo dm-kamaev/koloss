@@ -1,7 +1,3 @@
-// export type ClassAsParameter<T extends new (...args: any) => any> = { new (...arg: ConstructorParameters<T>): InstanceType<T> };
-// export type Class<T extends new (...args: any[]) => any> = { new (...arg: ConstructorParameters<T>): InstanceType<T> };
-// export type Class<T = unknown> = new (...args: any[]) => T;
-
 type FactoryType<Instance, InputClass extends { new (...arg: any[]): Instance }> = (Class: InputClass) => Instance;
 
 export class Factory {
@@ -13,7 +9,20 @@ export class Factory {
   ): Instance {
     const result = {} as Instance;
 
-    const methodNames = Object.getOwnPropertyNames(Class.prototype).filter((m) => m !== 'constructor');
+    // We collect props using prototype chain
+    const methodNames = new Set<string>();
+    let proto = Class.prototype;
+    while (proto && proto !== Object.prototype) {
+      Object.getOwnPropertyNames(proto)
+        .filter((m) => m !== 'constructor')
+        .forEach((m) => methodNames.add(m));
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    // Old approach
+    // We collect only own methods of class
+    // const methodNames = Object.getOwnPropertyNames(Class.prototype).filter((m) => m !== 'constructor');
+    // console.log('🚀 ~ Factory ~ new ~ methodNames:', methodNames);
 
     for (const methodName of methodNames) {
       const originalMethod = Class.prototype[methodName];
@@ -23,7 +32,6 @@ export class Factory {
 
         value: (...args: unknown[]) => {
           const instance = createInstance(Class);
-          // console.log('Instance was created', Class.prototype.constructor.name);
 
           return originalMethod.apply(instance, args);
         },
