@@ -38,7 +38,9 @@ export class OrderDbInMemoryFake extends OrderDb {
 
   async findLastOrderByUserId(userId: number): Promise<OrderRaw | undefined> {
     const userOrders = this._orders.filter((o) => o.userId === userId);
-    if (userOrders.length === 0) return undefined;
+    if (userOrders.length === 0) {
+      return undefined;
+    }
     return userOrders.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
   }
 

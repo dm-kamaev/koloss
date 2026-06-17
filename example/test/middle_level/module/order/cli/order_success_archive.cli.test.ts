@@ -4,16 +4,13 @@ import { OrderSuccessArchive } from '@/module/order/action/order_success_archive
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { z } from 'zod';
 import { pgConnect } from '@/core/pg/pg.instance';
-import { SchemaDB } from '@/core/pg/pg.type';
+import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
 
 describe('CLI: orderSuccessArchive', () => {
-  let db: SchemaDB;
-
   beforeEach(async () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     await pgConnect.rebuild();
     await testTransaction.start();
-    db = pgConnect.create();
   });
 
   afterEach(async () => {
@@ -33,31 +30,21 @@ describe('CLI: orderSuccessArchive', () => {
     const date = oneHourAgo.toISOString();
     const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', date];
 
+    const orderDb = new OrderDbFake();
+
     // Insert a completed order older than the cutoff (should be archived)
-    const { id: oldOrderId } = await db
-      .insertInto('orders')
-      .values({
-        user_id: 1234,
-        products: JSON.stringify([]),
-        price: 10,
-        status: 'completed',
-        updated_at: twoDaysAgo as unknown as string,
-      })
-      .returning('id')
-      .executeTakeFirstOrThrow();
+    const { id: oldOrderId } = await orderDb.add(
+      OrderDbFake.generate({
+        updatedAt: twoDaysAgo,
+      }),
+    );
 
     // Insert a completed order newer than the cutoff (should NOT be archived)
-    const { id: newOrderId } = await db
-      .insertInto('orders')
-      .values({
-        user_id: 1234,
-        products: JSON.stringify([]),
-        price: 5,
-        status: 'completed',
-        updated_at: now as unknown as string,
-      })
-      .returning('id')
-      .executeTakeFirstOrThrow();
+    const { id: newOrderId } = await orderDb.add(
+      OrderDbFake.generate({
+        updatedAt: now,
+      }),
+    );
 
     // Act
     const result = await orderSuccessArchiveCli({
@@ -69,10 +56,7 @@ describe('CLI: orderSuccessArchive', () => {
     // Assert
     expect(result).toEqual({ ok: true });
 
-    const [oldOrder, newOrder] = await Promise.all([
-      db.selectFrom('orders').selectAll().where('id', '=', oldOrderId).executeTakeFirst(),
-      db.selectFrom('orders').selectAll().where('id', '=', newOrderId).executeTakeFirst(),
-    ]);
+    const [oldOrder, newOrder] = await Promise.all([orderDb.getById(oldOrderId), orderDb.getById(newOrderId)]);
 
     expect(oldOrder?.status).toBe('archived');
     expect(newOrder?.status).toBe('completed');

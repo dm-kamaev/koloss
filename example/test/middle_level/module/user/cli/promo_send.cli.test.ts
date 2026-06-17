@@ -2,17 +2,16 @@ import { testTransaction } from 'pg-transactional-tests';
 import { promoSendCli } from '@/module/user/cli/promo_send.cli';
 import { PromoSend } from '@/module/user/action/promo_send.action';
 import { emailClientInstance } from '@/core/email/email_client.instance';
-import { OrderRaw } from '@/module/order/repository/order.db';
 import { z } from 'zod';
 import { createMockClass } from '@/lib_test';
 import { pgConnect } from '@/core/pg/pg.instance';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { OrderCommunicatorFake } from '@test/fake/module/order/order.communicator';
 import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
+import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
 
 describe('CLI: promoSend', () => {
   let dispatchEmailSpy: jest.SpyInstance;
-  const db = pgConnect.create();
 
   beforeEach(async () => {
     dispatchEmailSpy = jest.spyOn(emailClientInstance, 'dispatch').mockReturnValue(undefined);
@@ -28,34 +27,27 @@ describe('CLI: promoSend', () => {
   });
 
   afterAll(async () => {
-    await db.destroy();
+    await pgConnect.destroy();
   });
 
   it('should send promo codes to inactive users based on CLI argument', async () => {
     // Arrange
     const activeUser = { id: 2678, email: 'jane1.doe@example.com', name: 'Jane', last_name: 'Doe' };
-    await db.insertInto('users').values([activeUser]).execute();
+    const userDb = new UserDbFake();
+    await userDb.insert(activeUser);
 
     const now = new Date();
     const fortyDaysAgo = new Date(new Date().setDate(now.getDate() - 40));
-    const lastOrderInactive: OrderRaw = {
-      id: 1,
+    const lastOrderInactive = OrderDbFake.generate({
       userId: UserDbFake.defaultUser.id,
-      products: [{ name: 'Apple', amount: 1, price: 10 }],
-      price: 10,
-      status: 'completed',
       updatedAt: fortyDaysAgo,
-    };
+    });
 
     const tenDaysAgo = new Date(new Date().setDate(now.getDate() - 10));
-    const lastOrderActive: OrderRaw = {
-      id: 3,
+    const lastOrderActive = OrderDbFake.generate({
       userId: activeUser.id,
-      products: [{ name: 'Banana', amount: 3, price: 5 }],
-      price: 15,
-      status: 'completed',
       updatedAt: tenDaysAgo,
-    };
+    });
 
     const OrderCommunicatorCtor = createMockClass(OrderCommunicatorFake, {
       findLastOrderByUserId: async (userId) => {
@@ -87,15 +79,10 @@ describe('CLI: promoSend', () => {
   it('should not send promo codes if no users are inactive', async () => {
     // Arrange
     const now = new Date();
-    const tenDaysAgo = new Date(new Date().setDate(now.getDate() - 10));
-    const lastOrderActive: OrderRaw = {
-      id: 1,
+    const lastOrderActive = OrderDbFake.generate({
       userId: UserDbFake.defaultUser.id,
-      products: [{ name: 'Milk', amount: 4, price: 15 }],
-      price: 60,
-      status: 'completed',
-      updatedAt: tenDaysAgo,
-    };
+      updatedAt: new Date(new Date().setDate(now.getDate() - 10)),
+    });
 
     const OrderCommunicatorCtor = createMockClass(OrderCommunicatorFake, {
       findLastOrderByUserId: async (userId) => {
@@ -106,14 +93,15 @@ describe('CLI: promoSend', () => {
       },
     });
 
-    const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30']; // Inactivity threshold: 30 days
+    const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30'];
 
     // Act
     const result = await promoSendCli({
-      PromoSend, // Use the actual constructor
+      PromoSend,
       orderCommunicator: new AppCommunicatorFake({ OrderCommunicatorCtor }).order,
       args,
     });
+
     // Assert
     expect(result).toEqual({ ok: true });
     expect(dispatchEmailSpy).not.toHaveBeenCalled();

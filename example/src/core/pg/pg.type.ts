@@ -15,7 +15,7 @@ export interface OrdersTable {
   products: ColumnType<any, string, string>; // JSONB
   price: number;
   status: OrderStatus;
-  updated_at: ColumnType<Date, string, string>;
+  updated_at: ColumnType<Date, Date | string, Date | string>;
 }
 
 export interface DB {
