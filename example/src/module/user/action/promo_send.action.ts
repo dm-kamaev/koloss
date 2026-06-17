@@ -21,7 +21,6 @@ export class PromoSend {
     const users = await this.userDb.getAll();
     const now = new Date();
 
-    console.log('🚀 ~ PromoSend ~ act ~ users.len:', users.length);
     for (const user of users) {
       const lastOrder = await this.orderCommunicator.findLastOrderByUserId(user.id);
 

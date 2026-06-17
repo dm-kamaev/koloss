@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      target: development # Docker to stop at Stage 1 for dev/testing
+    build: .
     container_name: koloss_backend
     ports:
       - '4005:4005'
@@ -16,7 +14,26 @@ services:
       DB_USER: 'koloss'
       DB_PASSWORD: 'example'
       DB_NAME: 'koloss'
-    command: node dist/src/http.js
+    command: node --enable-source-maps dist/src/http.js
+    depends_on:
+      - pg
+      - kafka
+
+  backend_dev:
+    build:
+      context: .
+      target: development
+    container_name: koloss_backend_dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      TZ: 'Europe/Moscow'
+      DB_HOST: 'pg'
+      DB_PORT: '5432'
+      DB_USER: 'koloss'
+      DB_PASSWORD: 'example'
+      DB_NAME: 'koloss'
     depends_on:
       - pg
 
@@ -30,3 +47,30 @@ services:
       POSTGRES_PASSWORD: 'example'
     volumes:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  zookeeper:
+    container_name: zookeeper-single
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+
+  kafka:
+    container_name: kafka-single
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka-single:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS: 1000

@@ -1,9 +1,9 @@
-run_http:
+http.dev:
 	npx tsx src/http.ts
 
 # make run_cron args="orderSuccessArchive --date 2024-01-01T12:00:00.000Z"
 args=
-run_cli:
+cli.dev:
 	npx tsx src/cli.ts $(args)
 
 
@@ -13,24 +13,31 @@ check_ts:
 
 build: check_ts
 	rm -rf dist;
-	npx tsc
+	npx tsc && npx tsc-alias
 
 
+service=
 down:
-	docker compose down;
+	docker compose $(if $(service), rm -sf $(service), down)
 
 
 file=
 test:
-	docker compose run --remove-orphans backend npx jest $(file)
+	docker compose run --remove-orphans backend_dev npx jest $(file)
+
+up:
+	docker compose up -d backend
+
+up.watch:
+	docker compose up backend
 
 
 test.watch:
-	docker compose run --remove-orphans backend  npx jest $(file) --watchAll
+	docker compose run --remove-orphans backend_dev npx jest $(file) --watchAll
 
 
 test.coverage:
-	docker compose run --remove-orphans backend npx jest --coverage
+	docker compose run --remove-orphans backend_dev npx jest --coverage
 
 # test:middle:
 # 	docker-compose run backend npx jest --verbose test/middle_level
@@ -58,4 +65,4 @@ api.order_get:
 
 # ================== END API ==================
 
-.PHONY: test
+.PHONY: test test.watch test.coverage build check_ts down up
