@@ -32,7 +32,7 @@ function fromDb(order: OrderSelectable): OrderRaw {
 }
 
 export class OrderDb {
-  private readonly db: SchemaDB;
+  protected readonly db: SchemaDB;
 
   constructor() {
     this.db = pgConnect.create();
@@ -44,6 +44,21 @@ export class OrderDb {
     if (!order) {
       throw new Error(`Not found order with id: ${orderId}`);
     }
+    return fromDb(order);
+  }
+
+  async getLastByUserId(userId: number): Promise<OrderRaw | undefined> {
+    const order = await this.db
+      .selectFrom('orders')
+      .selectAll()
+      .where('user_id', '=', userId)
+      .orderBy('updated_at', 'desc')
+      .executeTakeFirst();
+
+    if (!order) {
+      return undefined;
+    }
+
     return fromDb(order);
   }
 

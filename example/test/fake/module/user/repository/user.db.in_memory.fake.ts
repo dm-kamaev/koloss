@@ -23,6 +23,10 @@ export class UserDbInMemoryFake extends UserDb {
     return user;
   }
 
+  async getAll(): Promise<Selectable<UserRow>[]> {
+    return this._users;
+  }
+
   async existWithId(userId: number): Promise<boolean> {
     return this._users.some((u) => u.id === userId);
   }

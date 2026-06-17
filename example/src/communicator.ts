@@ -28,7 +28,7 @@ export class AppCommunicator implements ICommunicator {
     // return 2;
     // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
     const { OrderCommunicator } = require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
-    console.log('OrderCommunicator was loaded', OrderCommunicator);
+    // console.log('OrderCommunicator was loaded', OrderCommunicator);
 
     return this.factory.new(OrderCommunicator, (Class) => new Class(this.user));
   }

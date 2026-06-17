@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { PromoSendCtor } from '../action/promo_send.action';
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
+import { UserDb } from '../repository/user.db';
 
 function PromoSendInputDto(args: string[]) {
   const { values } = parseArgs({
@@ -28,15 +29,17 @@ function PromoSendInputDto(args: string[]) {
 export async function promoSendCli({
   PromoSend,
   orderCommunicator,
+  userDb,
   args = process.argv,
 }: {
   PromoSend: PromoSendCtor;
   orderCommunicator: IOrderCommunicator;
+  userDb?: UserDb;
   args: string[];
 }): Promise<{ ok: true }> {
   const parsedArgs = PromoSendInputDto(args).parse();
 
   console.log(`JOB: promoSendCli - checking for users inactive for more than ${parsedArgs.inactivityDays} days`);
-  const action = new PromoSend(orderCommunicator);
+  const action = new PromoSend(orderCommunicator, userDb);
   return await action.act(parsedArgs.inactivityDays);
 }

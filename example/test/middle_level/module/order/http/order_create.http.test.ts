@@ -10,13 +10,11 @@ import { emailClientInstance } from '@/core/email/email_client.instance';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { FastifyInstance } from 'fastify';
 import { pgConnect } from '@/core/pg/pg.instance';
-import { SchemaDB } from '@/core/pg/pg.type';
 import { testTransaction } from 'pg-transactional-tests';
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.fake.in_memory';
+import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
 
 describe('HTTP Order Create', () => {
   let app: FastifyInstance;
-  const db: SchemaDB = pgConnect.create();
 
   beforeEach(async () => {
     app = createApp();
@@ -30,7 +28,7 @@ describe('HTTP Order Create', () => {
   });
 
   afterAll(async () => {
-    await db.destroy();
+    await pgConnect.destroy();
   });
 
   it('should create an order and return 201', async () => {
@@ -38,6 +36,10 @@ describe('HTTP Order Create', () => {
       { name: 'Banana', amount: 4, price: 10 },
       { name: 'Milk', amount: 32, price: 20 },
     ];
+
+    const orderDb = new OrderDbFake();
+
+    const countBefore = Number(await orderDb.countAll());
 
     orderCreateHttp({
       app,
@@ -49,7 +51,7 @@ describe('HTTP Order Create', () => {
       method: 'POST',
       url: '/order',
       payload: {
-        user_id: UserDbInMemoryFake.defaultUser.id,
+        user_id: 1234,
         products,
       },
     });
@@ -60,13 +62,11 @@ describe('HTTP Order Create', () => {
     expect(body.id).toEqual(expect.any(Number));
     expect(body.price).toBe(680);
     expect(body.countProducts).toBe(36);
-    expect(body.user.id).toBe(UserDbInMemoryFake.defaultUser.id);
+    expect(body.user.id).toBe(1234);
     expect(body.updatedAt).toBeDefined();
 
-    const result = await db.selectFrom('orders').select(db.fn.countAll().as('count')).executeTakeFirstOrThrow();
-
-    // 4 from init.sql + 1 created
-    expect(Number(result.count)).toBe(5);
+    const countAfter = Number(await orderDb.countAll());
+    expect(countAfter).toBe(countBefore + 1);
 
     expect(kafkaInstance.send).toHaveBeenCalledTimes(1);
     expect(emailClientInstance.dispatch).toHaveBeenCalledTimes(1);
@@ -81,7 +81,7 @@ describe('HTTP Order Create', () => {
       }),
     });
 
-    expect(emailClientInstance.dispatch).toHaveBeenCalledWith(UserDbInMemoryFake.defaultUser.email, expect.any(String), expect.any(String));
+    expect(emailClientInstance.dispatch).toHaveBeenCalledWith('test@example.com', expect.any(String), expect.any(String));
   });
 
   it('should return 404 if user is not found', async () => {
@@ -91,7 +91,10 @@ describe('HTTP Order Create', () => {
       { name: 'Milk', amount: 32, price: 20 },
     ];
 
-    const UserCommunicatorCtor = createMockClass(UserCommunicatorFake, { existUserWithId: async (id) => id !== userId });
+    const orderDb = new OrderDbFake();
+    const countBefore = Number(await orderDb.countAll());
+
+    const UserCommunicatorCtor = createMockClass(UserCommunicatorFake, { existUserWithId: async (id: number) => id !== userId });
 
     orderCreateHttp({
       app,
@@ -112,7 +115,7 @@ describe('HTTP Order Create', () => {
     const body = JSON.parse(response.body) as AppError;
     expect(body.code).toBe(new NotFound('').code);
 
-    const result = await db.selectFrom('orders').select(db.fn.countAll().as('count')).executeTakeFirstOrThrow();
-    expect(Number(result.count)).toBe(4); // 4 from init.sql
+    const countAfter = Number(await orderDb.countAll());
+    expect(countAfter).toBe(countBefore);
   });
 });

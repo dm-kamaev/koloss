@@ -1,29 +1,63 @@
+import { testTransaction } from 'pg-transactional-tests';
 import { orderSuccessArchiveCli } from '@/module/order/cli/order_success_archive.cli';
 import { OrderSuccessArchive } from '@/module/order/action/order_success_archive.action';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { z } from 'zod';
 import { pgConnect } from '@/core/pg/pg.instance';
+import { SchemaDB } from '@/core/pg/pg.type';
 
 describe('CLI: orderSuccessArchive', () => {
-  const db = pgConnect.create();
+  let db: SchemaDB;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
+    await pgConnect.rebuild();
+    await testTransaction.start();
+    db = pgConnect.create();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await testTransaction.rollback();
     jest.restoreAllMocks();
   });
 
   afterAll(async () => {
-    await db.destroy();
+    await pgConnect.destroy();
   });
 
   it('should archive completed orders older than the specified date', async () => {
     // Arrange
-    // The date is set to now, so orders with past completed dates will be archived.
-    const date = new Date().toISOString();
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 3_600_000);
+    const twoDaysAgo = new Date(now.getTime() - 172_800_000);
+    const date = oneHourAgo.toISOString();
     const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', date];
+
+    // Insert a completed order older than the cutoff (should be archived)
+    const { id: oldOrderId } = await db
+      .insertInto('orders')
+      .values({
+        user_id: 1234,
+        products: JSON.stringify([]),
+        price: 10,
+        status: 'completed',
+        updated_at: twoDaysAgo as unknown as string,
+      })
+      .returning('id')
+      .executeTakeFirstOrThrow();
+
+    // Insert a completed order newer than the cutoff (should NOT be archived)
+    const { id: newOrderId } = await db
+      .insertInto('orders')
+      .values({
+        user_id: 1234,
+        products: JSON.stringify([]),
+        price: 5,
+        status: 'completed',
+        updated_at: now as unknown as string,
+      })
+      .returning('id')
+      .executeTakeFirstOrThrow();
 
     // Act
     const result = await orderSuccessArchiveCli({
@@ -35,16 +69,13 @@ describe('CLI: orderSuccessArchive', () => {
     // Assert
     expect(result).toEqual({ ok: true });
 
-    const [order1, _] = await Promise.all([
-      db.selectFrom('orders').selectAll().where('id', '=', 1).executeTakeFirst(),
-      db.selectFrom('orders').selectAll().where('id', '=', 3).executeTakeFirst(),
+    const [oldOrder, newOrder] = await Promise.all([
+      db.selectFrom('orders').selectAll().where('id', '=', oldOrderId).executeTakeFirst(),
+      db.selectFrom('orders').selectAll().where('id', '=', newOrderId).executeTakeFirst(),
     ]);
 
-    // from init.sql: order 1 is 'completed' and in the past
-    expect(order1?.status).toBe('archived');
-    // from init.sql: order 3 is 'completed' but updated_at is NOW() so it may or may not be archived depending on timing
-    // depending on the exact execution time, this could be 'completed' or 'archived', so we don't assert it.
-    // A better test would be to control the `updated_at` time in the database.
+    expect(oldOrder?.status).toBe('archived');
+    expect(newOrder?.status).toBe('completed');
   });
 });
 

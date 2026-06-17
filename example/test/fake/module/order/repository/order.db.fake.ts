@@ -1,5 +1,5 @@
 import { OrderDb, OrderRaw } from '@/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../user/repository/user.db.fake.in_memory';
+import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake';
 
 export class OrderDbFake extends OrderDb {
   // TODO: load from db before start test
@@ -27,5 +27,10 @@ export class OrderDbFake extends OrderDb {
 
   constructor() {
     super();
+  }
+
+  async countAll() {
+    const result = await this.db.selectFrom('orders').select(this.db.fn.countAll().as('count')).executeTakeFirstOrThrow();
+    return result.count;
   }
 }

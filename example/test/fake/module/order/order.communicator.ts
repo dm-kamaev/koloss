@@ -21,4 +21,8 @@ export class OrderCommunicatorFake extends OrderCommunicator {
   getCountUserOrders(_userId: number): Promise<number> {
     return Promise.resolve(25);
   }
+
+  findLastOrderByUserId(_userId: number): Promise<any> {
+    return Promise.resolve(undefined);
+  }
 }

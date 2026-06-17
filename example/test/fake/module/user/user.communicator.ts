@@ -1,6 +1,6 @@
 import { UserCommunicator } from '@/module/user/user.communicator';
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserDbInMemoryFake } from './repository/user.db.fake.in_memory';
+import { UserDbInMemoryFake } from './repository/user.db.in_memory.fake';
 import { User, UserWithEmail, UserWithOrdersCount } from '@/module/user/entity/user.entity';
 
 // import { IUserCommunicator } from '@/communicator/user.communicator.type';

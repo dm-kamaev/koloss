@@ -1,7 +1,7 @@
 import { UserDb } from '../repository/user.db';
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
 import { emailClientInstance } from '@/core/email/email_client.instance';
-
+let i = 0;
 export class PromoSend {
   constructor(
     private readonly orderCommunicator: IOrderCommunicator,
@@ -21,8 +21,9 @@ export class PromoSend {
     const users = await this.userDb.getAll();
     const now = new Date();
 
+    console.log('🚀 ~ PromoSend ~ act ~ users.len:', users.length);
     for (const user of users) {
-      const lastOrder = await this.orderCommunicator.getLastByUserId(user.id);
+      const lastOrder = await this.orderCommunicator.findLastOrderByUserId(user.id);
 
       if (!lastOrder) {
         // No orders ever, consider as inactive
@@ -42,6 +43,7 @@ export class PromoSend {
 
       if (diffDays > inactivityDays) {
         const promocode = this.generatePromocode();
+        console.log('emailClientInstance.dispatch', ++i);
         await emailClientInstance.dispatch(
           user.email,
           'We miss you!',

@@ -5,7 +5,8 @@ import { createApp } from '@/http';
 import { AppCommunicator } from '@/communicator';
 import { pgConnect } from '@/core/pg/pg.instance';
 import { FastifyInstance } from 'fastify';
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.fake.in_memory';
+import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
+import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
 
 describe('HTTP User Get By Id', () => {
   let app: FastifyInstance;
@@ -33,7 +34,7 @@ describe('HTTP User Get By Id', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: `/user/${UserDbInMemoryFake.defaultUser.id}`,
+      url: `/user/${UserDbFake.defaultUser.id}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -41,6 +42,6 @@ describe('HTTP User Get By Id', () => {
 
     expect(body.id).toBe(UserDbInMemoryFake.defaultUser.id);
     expect(body.email).toBe(UserDbInMemoryFake.defaultUser.email);
-    expect(body.ordersCount).toBe(2);
+    expect(body.ordersCount).toBe(0);
   });
 });

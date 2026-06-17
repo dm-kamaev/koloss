@@ -1,6 +1,5 @@
 import { PromoSend } from '@/module/user/action/promo_send.action';
-
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.fake.in_memory';
+import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
 import { OrderCommunicatorFake } from '@test/fake/module/order/order.communicator';
 import { emailClientInstance } from '@/core/email/email_client.instance';
 import { OrderRaw } from '@/module/order/repository/order.db';
@@ -23,10 +22,10 @@ describe('PromoSend', () => {
     const userDbFake = new UserDbInMemoryFake({ users: [userWithoutOrders] });
     const orderCommunicatorFake = new OrderCommunicatorFake(new AppCommunicatorFake().user, {
       stubs: {
-        getLastByUserId: () => Promise.resolve(null),
+        findLastOrderByUserId: () => Promise.resolve(undefined),
       },
     });
-    const promoSend = new PromoSend(userDbFake, orderCommunicatorFake);
+    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
 
     await promoSend.act(30);
 
@@ -53,12 +52,12 @@ describe('PromoSend', () => {
     };
 
     const userDbFake = new UserDbInMemoryFake({ users: [inactiveUser] });
-    const orderCommunicatorFake = new OrderCommunicatorFake({
+    const orderCommunicatorFake = new OrderCommunicatorFake(new AppCommunicatorFake().user, {
       stubs: {
-        getLastByUserId: () => Promise.resolve(lastOrder),
+        findLastOrderByUserId: () => Promise.resolve(lastOrder),
       },
     });
-    const promoSend = new PromoSend(userDbFake, orderCommunicatorFake);
+    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
 
     await promoSend.act(30);
 
@@ -85,12 +84,12 @@ describe('PromoSend', () => {
     };
 
     const userDbFake = new UserDbInMemoryFake({ users: [activeUser] });
-    const orderCommunicatorFake = new OrderCommunicatorFake({
+    const orderCommunicatorFake = new OrderCommunicatorFake(new AppCommunicatorFake().user, {
       stubs: {
-        getLastByUserId: () => Promise.resolve(lastOrder),
+        findLastOrderByUserId: () => Promise.resolve(lastOrder),
       },
     });
-    const promoSend = new PromoSend(userDbFake, orderCommunicatorFake);
+    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
 
     await promoSend.act(30);
 
@@ -100,12 +99,12 @@ describe('PromoSend', () => {
   it('should generate a 4-character alphanumeric promocode', async () => {
     const user = { id: 4, email: 'test@example.com', name: 'Test', last_name: 'User' };
     const userDbFake = new UserDbInMemoryFake({ users: [user] });
-    const orderCommunicatorFake = new OrderCommunicatorFake({
+    const orderCommunicatorFake = new OrderCommunicatorFake(new AppCommunicatorFake().user, {
       stubs: {
-        getLastByUserId: () => Promise.resolve(null),
+        findLastOrderByUserId: () => Promise.resolve(undefined),
       },
     });
-    const promoSend = new PromoSend(userDbFake, orderCommunicatorFake);
+    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
 
     await promoSend.act(1);
 

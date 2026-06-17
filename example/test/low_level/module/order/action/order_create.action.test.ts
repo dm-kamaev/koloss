@@ -1,7 +1,7 @@
 import { OrderCreate } from '@/module/order/action/order_create.action';
-import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.fake.in_memory';
+import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake';
 import { OrderProductRaw } from '@/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.fake.in_memory';
+import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.in_memory.fake';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 
 describe('OrderCreate', () => {

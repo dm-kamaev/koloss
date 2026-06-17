@@ -7,8 +7,8 @@ export const userJobs: Record<string, () => Promise<{ ok: true }>> = {
     const { promoSendCli } = await import('@/module/user/cli/promo_send.cli');
     return await promoSendCli({
       PromoSend,
-      userDb: new UserDb(),
       orderCommunicator: communicator.order,
+      userDb: new UserDb(),
       args: process.argv,
     });
   },
