@@ -1,10 +1,14 @@
 http.dev:
 	npx tsx src/http.ts
 
-# make run_cron args="orderSuccessArchive --date 2024-01-01T12:00:00.000Z"
+# make cli args="orderSuccessArchive --date 2024-01-01T12:00:00.000Z"
+# make cli args="promoSend --inactivityDays 30"
 args=
 cli.dev:
 	npx tsx src/cli.ts $(args)
+
+cli:
+	docker compose exec backend node --enable-source-maps dist/src/cli.js $(args)
 
 
 check_ts:

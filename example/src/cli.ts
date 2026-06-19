@@ -2,9 +2,11 @@
 
 import { parseArgs } from 'node:util';
 import { orderJobs } from '@/module/order/order.cli_router';
+import { userJobs } from '@/module/user/user.cli_router';
 
 const jobs: Record<string, () => Promise<{ ok: true }>> = {
   ...orderJobs,
+  ...userJobs,
 };
 
 export async function invokeCommand(args: string[] = process.argv) {
