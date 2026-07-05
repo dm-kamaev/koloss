@@ -78,6 +78,7 @@ describe('HTTP Order Create', () => {
         price: body.price,
         countProducts: body.countProducts,
         createdAt: new Date(body.updatedAt),
+        userId: body.user.id,
       }),
     });
 

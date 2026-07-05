@@ -1,3 +1,4 @@
+import { OK } from '@/lib';
 import { testTransaction } from 'pg-transactional-tests';
 import { orderSuccessArchiveCli } from '@/module/order/cli/order_success_archive.cli';
 import { OrderSuccessArchive } from '@/module/order/action/order_success_archive.action';
@@ -54,7 +55,7 @@ describe('CLI: orderSuccessArchive', () => {
     });
 
     // Assert
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(OK);
 
     const [oldOrder, newOrder] = await Promise.all([orderDb.getById(oldOrderId), orderDb.getById(newOrderId)]);
 

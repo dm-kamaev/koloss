@@ -1,9 +1,10 @@
+import { AsyncOK } from '@/lib';
 import { UserDb } from '@/module/user/repository/user.db';
 import { communicator } from '@/communicator';
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from './action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 
-export const userJobs: Record<string, () => Promise<{ ok: true }>> = {
-  promoCodeSendToUsersDidntMakeOrderForTooLong: async (): Promise<{ ok: true }> => {
+export const userJobs: Record<string, () => AsyncOK> = {
+  promoCodeSendToUsersDidntMakeOrderForTooLong: async (): AsyncOK => {
     const { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } = await import(
       '@/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli'
     );

@@ -3,8 +3,8 @@
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { AppError } from '@/core/error/app.error';
-import { mountUserRoutes } from '@/module/user/user.http_router';
-import { mountOrderRoutes } from '@/module/order/order.http_router';
+import { mountUserRoutes } from '@/module/user/user.http.router';
+import { mountOrderRoutes } from '@/module/order/order.http.router';
 
 import { communicator } from './communicator';
 

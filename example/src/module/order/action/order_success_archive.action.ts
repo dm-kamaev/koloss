@@ -1,4 +1,5 @@
 import { IUserCommunicator } from '@/communicator/user.communicator.type';
+import { OK } from '@/lib';
 import { OrderDb } from '../repository/order.db';
 
 export class OrderSuccessArchive {
@@ -16,7 +17,7 @@ export class OrderSuccessArchive {
 
     if (ordersToArchive.length === 0) {
       console.log(`No completed orders older than ${olderThanDate.toISOString()} to archive.`);
-      return { ok: true as const };
+      return OK;
     }
 
     console.log(`Found ${ordersToArchive.length} orders to archive.`);
@@ -29,7 +30,7 @@ export class OrderSuccessArchive {
     }
 
     console.log('ACTION Finished: OrderSuccessArchive');
-    return { ok: true as const };
+    return OK;
   }
 }
 

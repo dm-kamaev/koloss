@@ -3,7 +3,19 @@ import { KafkaProducer } from '@/core/kafka/kafka_producer';
 export class OrderCreateMetric {
   constructor(private readonly kafkaProducer = new KafkaProducer()) {}
 
-  async act({ id, price, countProducts, createdAt }: { id: number; price: number; countProducts; createdAt: Date }) {
+  async act({
+    id,
+    price,
+    countProducts,
+    createdAt,
+    userId,
+  }: {
+    id: number;
+    price: number;
+    countProducts;
+    createdAt: Date;
+    userId: number;
+  }) {
     await this.kafkaProducer.send({
       topic: 'order_metrics',
       data: {
@@ -13,6 +25,7 @@ export class OrderCreateMetric {
           price,
           countProducts,
           createdAt,
+          userId,
         },
       },
     });

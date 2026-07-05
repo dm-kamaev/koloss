@@ -1,10 +1,11 @@
 // ENTRY point for run task vi cli or by cron
 
 import { parseArgs } from 'node:util';
-import { orderJobs } from '@/module/order/order.cli_router';
-import { userJobs } from '@/module/user/user.cli_router';
+import { AsyncOK } from '@/lib';
+import { orderJobs } from '@/module/order/order.cli.router';
+import { userJobs } from '@/module/user/user.cli.router';
 
-const jobs: Record<string, () => Promise<{ ok: true }>> = {
+const jobs: Record<string, () => AsyncOK> = {
   ...orderJobs,
   ...userJobs,
 };

@@ -28,6 +28,7 @@ export class AfterOrderCreate {
         countProducts: order.countProducts,
         price: order.price,
         createdAt: order.updatedAt,
+        userId: user.id,
       }),
     ]);
 

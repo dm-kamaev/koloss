@@ -1,3 +1,4 @@
+import { OK } from '@/lib';
 import { testTransaction } from 'pg-transactional-tests';
 import { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } from '@/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli';
 import { emailClientInstance } from '@/core/email/email_client.instance';
@@ -10,7 +11,7 @@ import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
 import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '@/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 
-describe('CLI: promoSend', () => {
+describe('CLI: promoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
   let dispatchEmailSpy: jest.SpyInstance;
 
   beforeEach(async () => {
@@ -71,7 +72,7 @@ describe('CLI: promoSend', () => {
     });
 
     // Assert
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(OK);
     expect(dispatchEmailSpy).toHaveBeenCalledTimes(1);
     expect(dispatchEmailSpy).toHaveBeenCalledWith(UserDbFake.defaultUser.email, 'We miss you!', expect.any(String));
   });
@@ -103,7 +104,7 @@ describe('CLI: promoSend', () => {
     });
 
     // Assert
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(OK);
     expect(dispatchEmailSpy).not.toHaveBeenCalled();
   });
 });

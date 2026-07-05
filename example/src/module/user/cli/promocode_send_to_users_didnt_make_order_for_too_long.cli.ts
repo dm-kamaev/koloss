@@ -4,6 +4,7 @@ import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/pr
 import { IOrderCommunicator } from '@/communicator/order.communicator.type';
 import { UserDb } from '../repository/user.db';
 import { PromoCodeSend } from '../decorator/promocode_send.decorator';
+import { AsyncOK } from '@/lib';
 
 function PromoSendInputDto(args: string[]) {
   const { values } = parseArgs({
@@ -37,12 +38,10 @@ export async function promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
   orderCommunicator: IOrderCommunicator;
   userDb?: UserDb;
   args: string[];
-}): Promise<{ ok: true }> {
+}): AsyncOK {
   const parsedArgs = await PromoSendInputDto(args).act();
 
   console.log(`JOB: promoSendCli - checking for users inactive for more than ${parsedArgs.inactivityDays} days`);
-  // const action = new PromoCodeCreateIfUserDidntMakeOrderForTooLong(orderCommunicator, userDb);
-  // const userPromoCodes = await new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator, userDb).act(parsedArgs.inactivityDays);
 
   return await new PromoCodeSend(new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator, userDb)).act(
     parsedArgs.inactivityDays,

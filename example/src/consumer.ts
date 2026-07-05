@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { orderConsumers } from '@/module/order/order.consumer_router';
-import { userConsumers } from '@/module/user/user.consumer_router';
+import { orderConsumers } from '@/module/order/order.consumer.router';
+import { userConsumers } from '@/module/user/user.consumer.router';
 
 const consumers: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
   ...orderConsumers,

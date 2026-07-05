@@ -78,3 +78,8 @@ export class Factory {
 //     },
 //   ) as T;
 // }
+
+export type SyncOK = { ok: true };
+export type AsyncOK = Promise<{ ok: true }>;
+
+export const OK = { ok: true } as const;
