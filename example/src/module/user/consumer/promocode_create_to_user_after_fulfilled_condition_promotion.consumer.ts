@@ -24,7 +24,6 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   orderCommunicator: IOrderCommunicator;
   payload: Record<string, unknown>;
 }): AsyncOK {
-  console.log('🚀 ~ promoCodeSendToUserAfterFulfilledConditionPromotionConsumer ~ payload:', payload);
   const parsedPayload = await BulkOrderPayloadDto(payload).act();
 
   return await new PromoCodeSendToUserAfterFulfilledConditionPromotion(

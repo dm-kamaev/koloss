@@ -38,7 +38,6 @@ export async function startConsumer(args: string[] = process.argv): Promise<void
   await groupConsumer.run({
     eachMessage: async ({ topic, message }: EachMessagePayload) => {
       const payload = JSON.parse(message.value!.toString()) as Record<string, unknown>;
-      console.log('🚀 ~ startConsumer ~ payload:', payload);
 
       try {
         await entry.handler(payload);

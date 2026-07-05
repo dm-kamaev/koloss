@@ -15,7 +15,6 @@ export abstract class AppError extends Error {
   }
 
   pipeTo(reply: FastifyReply): void {
-    // console.log('🚀 ~ AppError ~ pipeTo ~ this.getHttpCode():', this.getHttpCode());
     reply.status(this.getHttpCode()).send(this.toJSON());
   }
 
