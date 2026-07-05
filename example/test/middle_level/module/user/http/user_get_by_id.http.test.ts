@@ -1,4 +1,4 @@
-// import { testTransaction } from 'pg-transactional-tests';
+import { testTransaction } from 'pg-transactional-tests';
 import { userGetByIdHttp } from '@/module/user/http/user_get_by_id.http';
 import { UserGetById } from '@/module/user/action/user_get_by_id.action';
 import { createApp } from '@/http';
@@ -11,18 +11,19 @@ import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
 describe('HTTP User Get By Id', () => {
   let app: FastifyInstance;
 
-  const db = pgConnect.create();
-
   beforeEach(async () => {
+    await pgConnect.rebuild();
+    await testTransaction.start();
     app = createApp();
   });
 
   afterEach(async () => {
     app.close();
+    await testTransaction.rollback();
   });
 
   afterAll(async () => {
-    await db.destroy();
+    await pgConnect.destroy();
   });
 
   it('should return user information and status 200', async () => {

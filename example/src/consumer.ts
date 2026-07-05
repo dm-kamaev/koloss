@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { Kafka, EachMessagePayload } from 'kafkajs';
 import { ConsumerEntry, userConsumers } from '@/module/user/user.consumer.router';
 
@@ -71,6 +72,6 @@ async function runConsumer() {
   }
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   runConsumer();
 }

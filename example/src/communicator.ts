@@ -1,6 +1,12 @@
 import { IUserCommunicator } from './communicator/user.communicator.type';
 import { IOrderCommunicator } from './communicator/order.communicator.type';
 import { Factory } from './lib';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+
+// CommonJS approach to handle circular dependencies via dynamic require()
+// eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+const _require = typeof __filename !== 'undefined' ? createRequire(__filename) : createRequire(resolve(process.argv[1]));
 
 export interface ICommunicator {
   user: IUserCommunicator;
@@ -11,25 +17,19 @@ export class AppCommunicator implements ICommunicator {
   constructor(protected readonly factory = new Factory()) {}
 
   get user(): IUserCommunicator {
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
-    const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
     // console.log('UserCommunicator was loaded', UserCommunicator);
 
     // ALTERANTIVE load:
     // Import type
     // import type * as UserCommunicatorModule from './module/user/user.communicator';
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+    // // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
     // const { UserCommunicator } = require('./module/user/user.communicator') as typeof UserCommunicatorModule;
-
+    const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
     return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
   }
 
   get order(): IOrderCommunicator {
-    // return 2;
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
-    const { OrderCommunicator } = require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
-    // console.log('OrderCommunicator was loaded', OrderCommunicator);
-
+    const { OrderCommunicator } = _require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
     return this.factory.new(OrderCommunicator, (Class) => new Class(this.user));
   }
 }

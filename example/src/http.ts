@@ -7,6 +7,7 @@ import { mountUserRoutes } from '@/module/user/user.http.router';
 import { mountOrderRoutes } from '@/module/order/order.http.router';
 
 import { communicator } from './communicator';
+import { fileURLToPath } from 'node:url';
 
 export const appErrorLogger = {
   error: console.error,
@@ -46,6 +47,6 @@ function startServer(app: FastifyInstance) {
   });
 }
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   startServer(mountRoutes(createApp()));
 }

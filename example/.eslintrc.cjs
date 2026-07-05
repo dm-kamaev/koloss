@@ -19,7 +19,6 @@ module.exports = {
     'plugin:promise/recommended',
   ],
   ignorePatterns: [
-    '.eslintrc.js',
     'jest.config.js',
     'node_modules',
   ],
@@ -53,10 +52,7 @@ module.exports = {
 
     // === node js
     'handle-callback-err': ['error'],
-    'global-require': ['error'],
-    'callback-return': ['error'],
     'no-buffer-constructor': ['error'],
-    'no-new-require': ['error'],
     // ===
 
     // === promise

@@ -44,19 +44,15 @@ export function orderCreateHttp({
 
     const user = await order.getUser();
 
-    try {
-      reply.status(201).send({
-        id: order.id,
-        price: order.price,
-        countProducts: order.countProducts,
-        updatedAt: order.updatedAt,
-        user: {
-          id: user.id,
-          email: user.email,
-        },
-      });
-    } catch (error) {
-      console.log('HERE', error);
-    }
+    reply.status(201).send({
+      id: order.id,
+      price: order.price,
+      countProducts: order.countProducts,
+      updatedAt: order.updatedAt,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
   });
 }
