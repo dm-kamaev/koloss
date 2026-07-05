@@ -2,8 +2,19 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import { DB, SchemaDB } from './pg.type';
 
+export interface PgConnectConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  poolSize?: number;
+}
+
 export class PgConnect {
   private dbConnect: SchemaDB | undefined;
+
+  constructor(private readonly config: PgConnectConfig) {}
 
   create() {
     if (this.dbConnect) {
@@ -12,12 +23,12 @@ export class PgConnect {
 
     const dialect = new PostgresDialect({
       pool: new Pool({
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        size: 10,
+        host: this.config.host,
+        port: this.config.port,
+        user: this.config.user,
+        password: this.config.password,
+        database: this.config.database,
+        size: this.config.poolSize ?? 10,
       }),
     });
 
@@ -39,4 +50,10 @@ export class PgConnect {
   }
 }
 
-export const pgConnect = new PgConnect();
+export const pgConnect = new PgConnect({
+  host: process.env.DB_HOST ?? 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
+  user: process.env.DB_USER ?? 'koloss',
+  password: process.env.DB_PASSWORD ?? 'example',
+  database: process.env.DB_NAME ?? 'koloss',
+});

@@ -72,6 +72,17 @@ export class OrderDb {
     return Number(result?.count ?? 0);
   }
 
+  async getCountUserOrdersWithPriceAbove(userId: number, minPrice: number): Promise<number> {
+    const result = await this.db
+      .selectFrom('orders')
+      .select(({ fn }) => [fn.count<string>('id').as('count')])
+      .where('user_id', '=', userId)
+      .where('price', '>', minPrice)
+      .executeTakeFirst();
+
+    return Number(result?.count ?? 0);
+  }
+
   async create(orderData: { userId: number; products: OrderProductRaw[] }): Promise<OrderRaw> {
     const order = new (OrderWithPrice(Order, orderData.products))(0); // temp id for price calculation
 

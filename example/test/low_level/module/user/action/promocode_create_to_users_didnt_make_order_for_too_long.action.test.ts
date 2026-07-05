@@ -5,7 +5,6 @@ import { OrderRaw } from '@/module/order/repository/order.db';
 import { AppCommunicatorFake } from '@test/fake/communicator';
 import { UserPromoCode } from '@/module/user/entity/user_promocode.entity';
 import { emailClientInstance } from '@/core/email/email_client.instance';
-import { EmailSdk } from '@/core/email/email_sdk';
 
 describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
   beforeEach(() => {
@@ -97,8 +96,8 @@ describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
     const promocode = result[0];
 
     const dispatchSpy = jest.spyOn(emailClientInstance, 'dispatch').mockReturnValue(undefined);
-    await promocode.sendToUserViaEmail(new EmailSdk(), {
-      subject: () => 'We miss you!',
+    await promocode.sendToUserViaEmail({
+      subject: 'We miss you!',
       body: (code: string) => `Here is a promocode for you: ${code}`,
     });
 

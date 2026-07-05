@@ -10,13 +10,13 @@ cli.dev:
 cli:
 	docker compose exec backend node --enable-source-maps dist/src/cli.js $(args)
 
-# make consumer.dev args="order_metrics"
+# make consumer.dev args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer.dev:
 	npx tsx src/consumer.ts $(args)
 
-# make consumer args="order_metrics"
+# make consumer args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer:
-	docker compose exec backend node --enable-source-maps dist/src/consumer.js
+	docker compose exec backend node --enable-source-maps dist/src/consumer.js $(args)
 
 
 check_ts:
@@ -32,13 +32,15 @@ service=
 down:
 	docker compose $(if $(service), rm -sf $(service), down)
 
+log:
+	docker compose logs -f --tail 100 | sed -u 's/^[^|]*[^ ]* //';
 
 file=
 test:
 	docker compose run --remove-orphans backend_dev npx jest $(file)
 
 up:
-	docker compose up -d backend
+	docker compose up --remove-orphans -d backend
 
 up.watch:
 	docker compose up backend

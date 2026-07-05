@@ -13,6 +13,10 @@ export class OrderCommunicatorFake extends OrderCommunicator {
     return Promise.resolve(25);
   }
 
+  getCountUserOrdersWithPriceAbove(_userId: number, _minPrice: number): Promise<number> {
+    return Promise.resolve(25);
+  }
+
   findLastOrderByUserId(_userId: number): Promise<any> {
     return Promise.resolve(undefined);
   }

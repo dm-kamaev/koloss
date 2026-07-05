@@ -1,16 +1,26 @@
 import { communicator } from '@/communicator';
 import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from './action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
 
-export const userConsumers: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
-  order_metrics: async (payload) => {
-    const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
-      '@/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
-    );
+export interface ConsumerEntry {
+  name: string;
+  topic: string;
+  handler: (payload: Record<string, unknown>) => Promise<void>;
+}
 
-    await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
-      PromoCodeCreateToUserAfterFulfilledConditionPromotion,
-      userCommunicator: communicator.user,
-      payload,
-    });
+export const userConsumers: ConsumerEntry[] = [
+  {
+    name: 'promoCodeSendToUserAfterFulfilledConditionPromotion',
+    topic: 'order_metrics',
+    handler: async (payload) => {
+      const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
+        '@/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
+      );
+
+      await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
+        PromoCodeCreateToUserAfterFulfilledConditionPromotion,
+        orderCommunicator: communicator.order,
+        payload,
+      });
+    },
   },
-};
+];

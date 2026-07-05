@@ -1,12 +1,8 @@
 import { parseArgs } from 'node:util';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { orderConsumers } from '@/module/order/order.consumer.router';
-import { userConsumers } from '@/module/user/user.consumer.router';
+import { ConsumerEntry, userConsumers } from '@/module/user/user.consumer.router';
 
-const consumers: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
-  ...orderConsumers,
-  ...userConsumers,
-};
+const consumers: ConsumerEntry[] = [...userConsumers];
 
 export async function startConsumer(args: string[] = process.argv): Promise<void> {
   const { positionals } = parseArgs({
@@ -22,9 +18,9 @@ export async function startConsumer(args: string[] = process.argv): Promise<void
     process.exit(1);
   }
 
-  const handler = consumers[consumerName];
+  const entry = consumers.find((c) => c.name === consumerName);
 
-  if (!handler) {
+  if (!entry) {
     throw new Error(`Consumer ${consumerName} not found`);
   }
 
@@ -33,30 +29,31 @@ export async function startConsumer(args: string[] = process.argv): Promise<void
     brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
   });
 
-  const consumer = kafka.consumer({ groupId: `koloss-consumer-${consumerName}` });
-  await consumer.connect();
+  const groupConsumer = kafka.consumer({ groupId: `koloss-consumer-${entry.name}` });
+  await groupConsumer.connect();
 
-  await consumer.subscribe({ topic: consumerName, fromBeginning: false });
-  console.log(`Subscribed to topic: ${consumerName}`);
+  await groupConsumer.subscribe({ topic: entry.topic, fromBeginning: false });
+  console.log(`Subscribed to topic: ${entry.topic}`);
 
-  await consumer.run({
+  await groupConsumer.run({
     eachMessage: async ({ topic, message }: EachMessagePayload) => {
       const payload = JSON.parse(message.value!.toString()) as Record<string, unknown>;
+      console.log('🚀 ~ startConsumer ~ payload:', payload);
 
       try {
-        await handler(payload);
+        await entry.handler(payload);
       } catch (error) {
         console.error(`Handler for topic ${topic} failed:`, error);
       }
     },
   });
 
-  console.log(`Consumer ${consumerName} started`);
+  console.log(`### Consumer ${entry.name} started ####\n\n`);
 
   await new Promise<void>((resolve) => {
     const shutdown = async () => {
       console.log('Shutting down consumer...');
-      await consumer.disconnect();
+      await groupConsumer.disconnect();
       resolve();
     };
 
