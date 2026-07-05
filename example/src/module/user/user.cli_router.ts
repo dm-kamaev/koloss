@@ -1,12 +1,14 @@
 import { UserDb } from '@/module/user/repository/user.db';
-import { PromoSend } from '@/module/user/action/promo_send.action';
 import { communicator } from '@/communicator';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from './action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 
 export const userJobs: Record<string, () => Promise<{ ok: true }>> = {
-  promoSend: async (): Promise<{ ok: true }> => {
-    const { promoSendCli } = await import('@/module/user/cli/promo_send.cli');
-    return await promoSendCli({
-      PromoSend,
+  promoCodeSendToUsersDidntMakeOrderForTooLong: async (): Promise<{ ok: true }> => {
+    const { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } = await import(
+      '@/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli'
+    );
+    return await promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
+      PromoCodeCreateToUsersDidntMakeOrderForTooLong,
       orderCommunicator: communicator.order,
       userDb: new UserDb(),
       args: process.argv,

@@ -1,15 +1,14 @@
-import { PromoSend } from '@/module/user/action/promo_send.action';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '@/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
 import { OrderCommunicatorFake } from '@test/fake/module/order/order.communicator';
-import { emailClientInstance } from '@/core/email/email_client.instance';
 import { OrderRaw } from '@/module/order/repository/order.db';
 import { AppCommunicatorFake } from '@test/fake/communicator';
+import { UserPromoCode } from '@/module/user/entity/user_promocode.entity';
+import { emailClientInstance } from '@/core/email/email_client.instance';
+import { EmailSdk } from '@/core/email/email_sdk';
 
-describe('PromoSend', () => {
-  let dispatchEmailSpy: jest.SpyInstance;
-
+describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
   beforeEach(() => {
-    dispatchEmailSpy = jest.spyOn(emailClientInstance, 'dispatch').mockReturnValue(undefined);
     jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
@@ -17,7 +16,7 @@ describe('PromoSend', () => {
     jest.restoreAllMocks();
   });
 
-  it('should send promo codes to users with no orders', async () => {
+  it('should create promocodes for users with no orders', async () => {
     const userWithoutOrders = { id: 1, email: 'noorder@example.com', name: 'John', last_name: 'Doe' };
     const userDbFake = new UserDbInMemoryFake({ users: [userWithoutOrders] });
     const orderCommunicatorFake = new OrderCommunicatorFake(new AppCommunicatorFake().user, {
@@ -25,23 +24,17 @@ describe('PromoSend', () => {
         findLastOrderByUserId: () => Promise.resolve(undefined),
       },
     });
-    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
+    const action = new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicatorFake, userDbFake);
 
-    await promoSend.act(30);
+    const result = await action.act(30);
 
-    expect(dispatchEmailSpy).toHaveBeenCalledTimes(1);
-    expect(dispatchEmailSpy).toHaveBeenCalledWith(
-      'noorder@example.com',
-      'We miss you!',
-      expect.stringContaining(`You haven't visited us for long time! Here is a promocode for you: `),
-    );
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBeInstanceOf(UserPromoCode);
   });
 
-  it('should send promo codes to inactive users', async () => {
+  it('should create promocodes for inactive users', async () => {
     const inactiveUser = { id: 2, email: 'inactive@example.com', name: 'Jane', last_name: 'Doe' };
-
-    const now = new Date();
-    const thirtyOneDaysAgo = new Date(now.setDate(now.getDate() - 31));
+    const thirtyOneDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
     const lastOrder: OrderRaw = {
       id: 101,
       userId: inactiveUser.id,
@@ -57,23 +50,17 @@ describe('PromoSend', () => {
         findLastOrderByUserId: () => Promise.resolve(lastOrder),
       },
     });
-    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
+    const action = new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicatorFake, userDbFake);
 
-    await promoSend.act(30);
+    const result = await action.act(30);
 
-    expect(dispatchEmailSpy).toHaveBeenCalledTimes(1);
-    expect(dispatchEmailSpy).toHaveBeenCalledWith(
-      'inactive@example.com',
-      'We miss you!',
-      expect.stringContaining(`You haven't visited us for long time! Here is a promocode for you: `),
-    );
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBeInstanceOf(UserPromoCode);
   });
 
-  it('should not send promo codes to active users', async () => {
+  it('should not create promocodes for active users', async () => {
     const activeUser = { id: 3, email: 'active@example.com', name: 'Peter', last_name: 'Pan' };
-
-    const now = new Date();
-    const tenDaysAgo = new Date(now.setDate(now.getDate() - 10));
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
     const lastOrder: OrderRaw = {
       id: 102,
       userId: activeUser.id,
@@ -89,11 +76,11 @@ describe('PromoSend', () => {
         findLastOrderByUserId: () => Promise.resolve(lastOrder),
       },
     });
-    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
+    const action = new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicatorFake, userDbFake);
 
-    await promoSend.act(30);
+    const result = await action.act(30);
 
-    expect(dispatchEmailSpy).not.toHaveBeenCalled();
+    expect(result).toHaveLength(0);
   });
 
   it('should generate a 4-character alphanumeric promocode', async () => {
@@ -104,11 +91,18 @@ describe('PromoSend', () => {
         findLastOrderByUserId: () => Promise.resolve(undefined),
       },
     });
-    const promoSend = new PromoSend(orderCommunicatorFake, userDbFake);
+    const action = new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicatorFake, userDbFake);
 
-    await promoSend.act(1);
+    const result = await action.act(1);
+    const promocode = result[0];
 
-    const callBody: string = dispatchEmailSpy.mock.calls[0][2];
+    const dispatchSpy = jest.spyOn(emailClientInstance, 'dispatch').mockReturnValue(undefined);
+    await promocode.sendToUserViaEmail(new EmailSdk(), {
+      subject: () => 'We miss you!',
+      body: (code: string) => `Here is a promocode for you: ${code}`,
+    });
+
+    const callBody: string = dispatchSpy.mock.calls[0][2];
     const promocodeMatch = callBody.match(/promocode for you: ([A-Z0-9]{4})/);
 
     expect(promocodeMatch).not.toBeNull();

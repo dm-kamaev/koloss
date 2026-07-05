@@ -1,6 +1,5 @@
 import { testTransaction } from 'pg-transactional-tests';
-import { promoSendCli } from '@/module/user/cli/promo_send.cli';
-import { PromoSend } from '@/module/user/action/promo_send.action';
+import { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } from '@/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli';
 import { emailClientInstance } from '@/core/email/email_client.instance';
 import { z } from 'zod';
 import { createMockClass } from '@/lib_test';
@@ -9,6 +8,7 @@ import { AppCommunicatorFake } from '@test/fake/communicator';
 import { OrderCommunicatorFake } from '@test/fake/module/order/order.communicator';
 import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
 import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '@/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 
 describe('CLI: promoSend', () => {
   let dispatchEmailSpy: jest.SpyInstance;
@@ -64,8 +64,8 @@ describe('CLI: promoSend', () => {
     const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30']; // Inactivity threshold: 30 days
 
     // Act
-    const result = await promoSendCli({
-      PromoSend, // Use the actual constructor
+    const result = await promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
+      PromoCodeCreateToUsersDidntMakeOrderForTooLong, // Use the actual constructor
       orderCommunicator: new AppCommunicatorFake({ OrderCommunicatorCtor }).order,
       args,
     });
@@ -96,8 +96,8 @@ describe('CLI: promoSend', () => {
     const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30'];
 
     // Act
-    const result = await promoSendCli({
-      PromoSend,
+    const result = await promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
+      PromoCodeCreateToUsersDidntMakeOrderForTooLong,
       orderCommunicator: new AppCommunicatorFake({ OrderCommunicatorCtor }).order,
       args,
     });
@@ -123,8 +123,8 @@ describe('CLI: promoSend [Validation]', () => {
 
     // Act
     await expect(
-      promoSendCli({
-        PromoSend, // Use the actual constructor
+      promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
+        PromoCodeCreateToUsersDidntMakeOrderForTooLong, // Use the actual constructor
         orderCommunicator: new AppCommunicatorFake().order,
         args,
       }),
@@ -136,8 +136,8 @@ describe('CLI: promoSend [Validation]', () => {
 
     // Act
     await expect(
-      promoSendCli({
-        PromoSend, // Use the actual constructor
+      promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
+        PromoCodeCreateToUsersDidntMakeOrderForTooLong, // Use the actual constructor
         orderCommunicator: new AppCommunicatorFake().order,
         args,
       }),

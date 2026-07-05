@@ -18,8 +18,8 @@ function OrderSuccessArchiveInputDto(args: string[]) {
   });
 
   return {
-    parse: () => {
-      return schema.parse(values);
+    act: () => {
+      return schema.parseAsync(values);
     },
   };
 }
@@ -32,7 +32,7 @@ export async function orderSuccessArchiveCli({
   userCommunicator: IUserCommunicator;
   args: string[];
 }) {
-  const parsedArgs = OrderSuccessArchiveInputDto(args).parse();
+  const parsedArgs = await OrderSuccessArchiveInputDto(args).act();
 
   console.log('JOB: orderSuccessArchive');
   const action = new OrderSuccessArchive(userCommunicator);

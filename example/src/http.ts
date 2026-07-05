@@ -27,7 +27,7 @@ function mountRoutes(app: FastifyInstance) {
 }
 
 function setupErrorHandler(app: FastifyInstance) {
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error, _request, reply) => {
     appErrorLogger.error(error);
     if (error instanceof AppError) {
       error.pipeTo(reply);
