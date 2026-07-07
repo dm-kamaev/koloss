@@ -5,7 +5,6 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 
 // CommonJS approach to handle circular dependencies via dynamic require()
-// eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
 const _require = typeof __filename !== 'undefined' ? createRequire(__filename) : createRequire(resolve(process.argv[1]));
 
 export interface ICommunicator {

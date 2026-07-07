@@ -9,7 +9,6 @@ import { pgConnect } from '#/core/pg/pg.instance';
 jest.mock('#/core/kafka/kafka_client.instance.ts');
 jest.mock('#/core/email/email_client.instance.ts');
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let appErrorLoggerSpy: jest.SpyInstance;
 
 beforeEach(() => {

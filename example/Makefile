@@ -22,6 +22,8 @@ consumer:
 check_ts:
 	npx tsc --noEmit
 
+lint:
+	npx eslint src/ test/
 
 build: check_ts
 	rm -rf dist;
@@ -79,4 +81,4 @@ api.order_get:
 
 # ================== END API ==================
 
-.PHONY: test test.watch test.coverage build check_ts down up
+.PHONY: test test.watch test.coverage build check_ts lint down up

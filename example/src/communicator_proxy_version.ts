@@ -53,7 +53,7 @@ function createLazyModuleProxy<T extends object>(loader: () => T): T {
       const instance = getInstance();
       return Reflect.has(instance, prop);
     },
-    ownKeys(target: T): ArrayLike<string | symbol> {
+    ownKeys(_target: T): ArrayLike<string | symbol> {
       const instance = getInstance();
       return Reflect.ownKeys(instance);
     },
@@ -78,7 +78,7 @@ const communicatorInternal: ICommunicator = {
 };
 
 communicatorInternal.user = createLazyModuleProxy<IUserCommunicator>(() => {
-  // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
   console.log('UserCommunicator was loaded', UserCommunicator);
 
@@ -86,7 +86,7 @@ communicatorInternal.user = createLazyModuleProxy<IUserCommunicator>(() => {
 });
 
 communicatorInternal.order = createLazyModuleProxy<IOrderCommunicator>(() => {
-  // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { OrderCommunicator } = require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
   console.log('OrderCommunicator was loaded', OrderCommunicator);
 

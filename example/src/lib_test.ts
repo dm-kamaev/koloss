@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // export type InstanceClassStub<InputClass extends new (...args: any[]) => any> = Partial<InstanceType<InputClass>>;
 
 // export function overridePropsOfObject<InputObject extends object>(instance: InputObject, stubs: Record<any, any>) {
