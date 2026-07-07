@@ -6,7 +6,7 @@
   "main": "dist/http.js",
   "scripts": {
     "test": "jest",
-    "build": "tsc && tsc-alias"
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -32,14 +32,17 @@
     "prettier": "3.2.5",
     "ts-jest": "^29.4.11",
     "ts-node": "10.8.0",
-    "tsc-alias": "1.8.17",
     "tsx": "4.19.2"
+  },
+  "imports": {
+    "#user/*": "./dist/src/module/user/*.js",
+    "#order/*": "./dist/src/module/order/*.js",
+    "#/*": "./dist/src/*.js"
   },
   "dependencies": {
     "kafkajs": "2.2.4",
     "kysely": "0.29.2",
     "pg": "8.21.0",
-    "tsconfig-paths": "4.2.0",
     "zod": "4.4.3"
   }
 }

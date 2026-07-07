@@ -1,8 +1,8 @@
-import { OrderGetById } from '@/module/order/action/order_get_by_id.action';
-import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake';
-import { OrderRaw } from '@/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.in_memory.fake';
-import { AppCommunicatorFake } from '@test/fake/communicator';
+import { OrderGetById } from '#/module/order/action/order_get_by_id.action';
+import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake.js';
+import { OrderRaw } from '#/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.in_memory.fake.js';
+import { AppCommunicatorFake } from '#test/fake/communicator';
 
 describe('OrderGetById', () => {
   it('should return an order with user information', async () => {

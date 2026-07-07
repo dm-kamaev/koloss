@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerEntry, userConsumers } from '@/module/user/user.consumer.router';
+import { ConsumerEntry, userConsumers } from '#/module/user/user.consumer.router';
 
 const consumers: ConsumerEntry[] = [...userConsumers];
 

@@ -1,7 +1,7 @@
-import { OrderCreate } from '../action/order_create.action';
-import { OrderProductRaw } from '../repository/order.db';
-import { OrderCreateEmailNotify } from '../notification/order_create_email.notify';
-import { OrderCreateMetric } from '../metric/order_create_metric.metric';
+import { OrderCreate } from '../action/order_create.action.js';
+import { OrderProductRaw } from '../repository/order.db.js';
+import { OrderCreateEmailNotify } from '../notification/order_create_email.notify.js';
+import { OrderCreateMetric } from '../metric/order_create_metric.metric.js';
 
 export class AfterOrderCreate {
   constructor(

@@ -1,5 +1,5 @@
-import { UserWithEmailInstance } from './user.entity';
-import { EmailSdk } from '@/core/email/email_sdk';
+import { UserWithEmailInstance } from './user.entity.js';
+import { EmailSdk } from '#/core/email/email_sdk';
 
 export class UserPromoCode {
   constructor(

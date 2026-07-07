@@ -1,5 +1,5 @@
-import { IUserCommunicator } from '@/communicator/user.communicator.type';
-import { NotFound } from '@/core/error/not_found.error';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { NotFound } from '#/core/error/not_found.error';
 
 export class UserExistGuard {
   constructor(private readonly userCommunicator: IUserCommunicator) {}

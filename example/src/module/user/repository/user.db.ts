@@ -1,6 +1,6 @@
-import { NotFound } from '@/core/error/not_found.error';
-import { SchemaDB, UsersTable } from '@/core/pg/pg.type';
-import { pgConnect } from '@/core/pg/pg.instance';
+import { NotFound } from '#/core/error/not_found.error';
+import { SchemaDB, UsersTable } from '#/core/pg/pg.type';
+import { pgConnect } from '#/core/pg/pg.instance';
 import { Selectable } from 'kysely';
 
 export type UserRow = Selectable<UsersTable>;

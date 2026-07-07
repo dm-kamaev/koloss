@@ -1,7 +1,7 @@
-import { OrderDb, OrderRaw, OrderProductRaw } from '@/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake';
-import { Order, OrderWithPrice } from '@/module/order/entity/order.entity';
-import { overridePropsOfObject, StubPropOfInstance } from '@/lib_test';
+import { OrderDb, OrderRaw, OrderProductRaw } from '#/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake.js';
+import { Order, OrderWithPrice } from '#/module/order/entity/order.entity';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
 
 export class OrderDbInMemoryFake extends OrderDb {
   static readonly defaultOrder: OrderRaw = {

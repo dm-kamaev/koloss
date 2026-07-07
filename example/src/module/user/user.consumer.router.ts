@@ -1,5 +1,5 @@
-import { communicator } from '@/communicator';
-import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from './action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
+import { communicator } from '#/communicator';
+import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from './action/promocode_create_to_user_after_fulfilled_condition_promotion.action.js';
 
 export interface ConsumerEntry {
   name: string;
@@ -13,7 +13,7 @@ export const userConsumers: ConsumerEntry[] = [
     topic: 'order_metrics',
     handler: async (payload) => {
       const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
-        '@/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
+        '#/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
       );
 
       await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({

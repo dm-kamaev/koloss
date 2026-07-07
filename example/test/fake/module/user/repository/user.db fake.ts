@@ -1,6 +1,6 @@
-import { overridePropsOfObject, StubPropOfInstance } from '@/lib_test';
-import { UserDb } from '@/module/user/repository/user.db';
-import { UsersTable } from '@/core/pg/pg.type';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+import { UserDb } from '#/module/user/repository/user.db';
+import { UsersTable } from '#/core/pg/pg.type';
 import { Selectable } from 'kysely';
 
 export class UserDbFake extends UserDb {

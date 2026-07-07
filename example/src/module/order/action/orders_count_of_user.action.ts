@@ -1,4 +1,4 @@
-import { OrderDb } from '../repository/order.db';
+import { OrderDb } from '../repository/order.db.js';
 
 export class OrdersCountOfUser {
   constructor(private readonly orderDb = new OrderDb()) {}

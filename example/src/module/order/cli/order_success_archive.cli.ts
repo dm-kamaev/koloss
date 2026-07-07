@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
-import { IUserCommunicator } from '@/communicator/user.communicator.type';
-import { OrderSuccessArchiveCtor } from '@/module/order/action/order_success_archive.action';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { OrderSuccessArchiveCtor } from '#/module/order/action/order_success_archive.action';
 
 function OrderSuccessArchiveInputDto(args: string[]) {
   const { values } = parseArgs({

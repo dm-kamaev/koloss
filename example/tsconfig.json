@@ -15,10 +15,10 @@
     "sourceMap": true,
     "outDir": "./dist",
     "paths": {
-      "@/*": ["./src/*"],
-      "@order/*": ["./src/module/order/*"],
-      "@user/*": ["./src/module/user/*"],
-      "@test/*": ["./test/*"]
+      "#user/*": ["./src/module/user/*"],
+      "#order/*": ["./src/module/order/*"],
+      "#/*": ["./src/*"],
+      "#test/*": ["./test/*"]
     }
   },
   "include": ["src/**/*", "test/**/*"],

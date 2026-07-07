@@ -1,10 +1,10 @@
-import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '@/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
-import { OrderCommunicatorFake } from '@test/fake/module/order/order.communicator';
-import { OrderRaw } from '@/module/order/repository/order.db';
-import { AppCommunicatorFake } from '@test/fake/communicator';
-import { UserPromoCode } from '@/module/user/entity/user_promocode.entity';
-import { emailClientInstance } from '@/core/email/email_client.instance';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '#/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
+import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
+import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
+import { OrderRaw } from '#/module/order/repository/order.db';
+import { AppCommunicatorFake } from '#test/fake/communicator';
+import { UserPromoCode } from '#/module/user/entity/user_promocode.entity';
+import { emailClientInstance } from '#/core/email/email_client.instance';
 
 describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
-import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserDb } from '../repository/user.db';
-import { User, UserWithEmail } from '../entity/user.entity';
-import { UserPromoCode } from '../entity/user_promocode.entity';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { UserDb } from '../repository/user.db.js';
+import { User, UserWithEmail } from '../entity/user.entity.js';
+import { UserPromoCode } from '../entity/user_promocode.entity.js';
 
 export class PromoCodeCreateToUserAfterFulfilledConditionPromotion {
   constructor(

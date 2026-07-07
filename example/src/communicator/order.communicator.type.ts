@@ -1,4 +1,4 @@
-import { OrderRaw } from '../module/order/repository/order.db';
+import { OrderRaw } from '../module/order/repository/order.db.js';
 
 export interface IOrderCommunicator {
   getCountUserOrders(userId: number): Promise<number>;

@@ -1,10 +1,9 @@
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
-import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action';
-import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserDb } from '../repository/user.db';
-import { PromoCodeSend } from '../decorator/promocode_send.decorator';
-import { AsyncOK } from '@/lib';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { PromoCodeSend } from '../decorator/promocode_send.decorator.js';
+import { AsyncOK, OK } from '#/lib';
 
 function PromoSendInputDto(args: string[]) {
   const { values } = parseArgs({
@@ -31,19 +30,17 @@ function PromoSendInputDto(args: string[]) {
 export async function promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
   PromoCodeCreateToUsersDidntMakeOrderForTooLong,
   orderCommunicator,
-  userDb,
   args = process.argv,
 }: {
   PromoCodeCreateToUsersDidntMakeOrderForTooLong: PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor;
   orderCommunicator: IOrderCommunicator;
-  userDb?: UserDb;
   args: string[];
 }): AsyncOK {
   const parsedArgs = await PromoSendInputDto(args).act();
 
   console.log(`JOB: promoSendCli - checking for users inactive for more than ${parsedArgs.inactivityDays} days`);
 
-  return await new PromoCodeSend(new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator, userDb)).act(
-    parsedArgs.inactivityDays,
-  );
+  await new PromoCodeSend(new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator)).act(parsedArgs.inactivityDays);
+
+  return OK;
 }

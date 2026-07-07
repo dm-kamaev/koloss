@@ -1,7 +1,7 @@
-import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { IUserCommunicator } from '@/communicator/user.communicator.type';
-import { UserGetById } from './action/user_get_by_id.action';
-import { UserExistWithId } from './action/user_exist_with_id.action';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { UserGetById } from './action/user_get_by_id.action.js';
+import { UserExistWithId } from './action/user_exist_with_id.action.js';
 
 export class UserCommunicator implements IUserCommunicator {
   constructor(

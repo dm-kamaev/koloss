@@ -1,11 +1,11 @@
-import { AsyncOK, OK } from '@/lib';
-import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
 
 export class PromoCodeSend {
   constructor(private readonly promoCodeCreateToUsersDidntMakeOrderForTooLong: PromoCodeCreateToUsersDidntMakeOrderForTooLong) {}
 
-  async act(inactivityDays: number): AsyncOK {
+  async act(inactivityDays: number) {
     const userPromoCodes = await this.promoCodeCreateToUsersDidntMakeOrderForTooLong.act(inactivityDays);
+
     for (const promocode of userPromoCodes) {
       await promocode.sendToUserViaEmail({
         subject: 'We miss you!',
@@ -13,6 +13,6 @@ export class PromoCodeSend {
       });
     }
 
-    return OK;
+    return userPromoCodes;
   }
 }

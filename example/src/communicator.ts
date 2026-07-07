@@ -1,6 +1,6 @@
-import { IUserCommunicator } from './communicator/user.communicator.type';
-import { IOrderCommunicator } from './communicator/order.communicator.type';
-import { Factory } from './lib';
+import { IUserCommunicator } from './communicator/user.communicator.type.js';
+import { IOrderCommunicator } from './communicator/order.communicator.type.js';
+import { Factory } from './lib.js';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 
@@ -17,13 +17,14 @@ export class AppCommunicator implements ICommunicator {
   constructor(protected readonly factory = new Factory()) {}
 
   get user(): IUserCommunicator {
-    // console.log('UserCommunicator was loaded', UserCommunicator);
-
-    // ALTERANTIVE load:
-    // Import type
-    // import type * as UserCommunicatorModule from './module/user/user.communicator';
+    // Approach with common js:
+    // Variant 1: Import type then require
+    // import type * as UserCommunicatorModule from './module/user/user.communicator.js';
     // // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
     // const { UserCommunicator } = require('./module/user/user.communicator') as typeof UserCommunicatorModule;
+    // Variant 2: require with import type at one moment
+    // const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+
     const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
     return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
   }

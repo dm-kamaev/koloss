@@ -1,7 +1,7 @@
-import { UserCommunicator } from '@/module/user/user.communicator';
-import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserDbInMemoryFake } from './repository/user.db.in_memory.fake';
-import { User, UserWithEmail, UserWithOrdersCount } from '@/module/user/entity/user.entity';
+import { UserCommunicator } from '#/module/user/user.communicator';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { UserDbInMemoryFake } from './repository/user.db.in_memory.fake.js';
+import { User, UserWithEmail, UserWithOrdersCount } from '#/module/user/entity/user.entity';
 
 export class UserCommunicatorFake extends UserCommunicator {
   constructor(orderCommunicator: IOrderCommunicator) {

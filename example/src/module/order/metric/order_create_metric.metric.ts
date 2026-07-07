@@ -1,4 +1,4 @@
-import { KafkaProducer } from '@/core/kafka/kafka_producer';
+import { KafkaProducer } from '#/core/kafka/kafka_producer';
 
 export class OrderCreateMetric {
   constructor(private readonly kafkaProducer = new KafkaProducer()) {}

@@ -1,4 +1,4 @@
-import { EmailSdk } from '@/core/email/email_sdk';
+import { EmailSdk } from '#/core/email/email_sdk';
 
 export class OrderCreateEmailNotify {
   constructor(private readonly emailSdk = new EmailSdk()) {}

@@ -25,7 +25,7 @@ check_ts:
 
 build: check_ts
 	rm -rf dist;
-	npx tsc && npx tsc-alias && node scripts/add-js-extensions.mjs
+	npx tsc
 
 
 service=

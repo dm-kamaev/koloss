@@ -2,9 +2,9 @@
 
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { AsyncOK } from '@/lib';
-import { orderJobs } from '@/module/order/order.cli.router';
-import { userJobs } from '@/module/user/user.cli.router';
+import { AsyncOK } from '#/lib';
+import { orderJobs } from '#/module/order/order.cli.router';
+import { userJobs } from '#/module/user/user.cli.router';
 
 const jobs: Record<string, () => AsyncOK> = {
   ...orderJobs,

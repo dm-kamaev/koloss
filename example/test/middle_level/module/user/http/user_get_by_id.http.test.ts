@@ -1,12 +1,12 @@
 import { testTransaction } from 'pg-transactional-tests';
-import { userGetByIdHttp } from '@/module/user/http/user_get_by_id.http';
-import { UserGetById } from '@/module/user/action/user_get_by_id.action';
-import { createApp } from '@/http';
-import { AppCommunicator } from '@/communicator';
-import { pgConnect } from '@/core/pg/pg.instance';
+import { userGetByIdHttp } from '#/module/user/http/user_get_by_id.http';
+import { UserGetById } from '#/module/user/action/user_get_by_id.action';
+import { createApp } from '#/http';
+import { AppCommunicator } from '#/communicator';
+import { pgConnect } from '#/core/pg/pg.instance';
 import { FastifyInstance } from 'fastify';
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
-import { UserDbFake } from '@test/fake/module/user/repository/user.db fake';
+import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
+import { UserDbFake } from '#test/fake/module/user/repository/user.db fake';
 
 describe('HTTP User Get By Id', () => {
   let app: FastifyInstance;

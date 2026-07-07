@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { IUserCommunicator } from '@/communicator/user.communicator.type';
-import { OrderGetByIdCtor } from '@/module/order/action/order_get_by_id.action';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { OrderGetByIdCtor } from '#/module/order/action/order_get_by_id.action';
 
 export function orderGetByIdHttp({
   app,

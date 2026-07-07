@@ -1,8 +1,8 @@
-import { OrderCreate } from '@/module/order/action/order_create.action';
-import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake';
-import { OrderProductRaw } from '@/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.in_memory.fake';
-import { AppCommunicatorFake } from '@test/fake/communicator';
+import { OrderCreate } from '#/module/order/action/order_create.action';
+import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake.js';
+import { OrderProductRaw } from '#/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '../../../../fake/module/user/repository/user.db.in_memory.fake.js';
+import { AppCommunicatorFake } from '#test/fake/communicator';
 
 describe('OrderCreate', () => {
   it('should create an order and return an order entity', async () => {

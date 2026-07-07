@@ -1,6 +1,6 @@
-import { UserDb } from '../repository/user.db';
-import { IOrderCommunicator } from '@/communicator/order.communicator.type';
-import { UserPromoCode } from '../entity/user_promocode.entity';
+import { UserDb } from '../repository/user.db.js';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { UserPromoCode } from '../entity/user_promocode.entity.js';
 
 export class PromoCodeCreateToUsersDidntMakeOrderForTooLong {
   constructor(

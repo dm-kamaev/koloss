@@ -1,4 +1,4 @@
-import { AppError } from './app.error';
+import { AppError } from './app.error.js';
 
 export class NotFound extends AppError {
   readonly code = 'NOT_FOUND';

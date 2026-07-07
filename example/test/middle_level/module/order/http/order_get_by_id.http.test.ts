@@ -1,11 +1,11 @@
-import { orderGetByIdHttp } from '@/module/order/http/order_get_by_id.http';
-import { OrderGetById } from '@/module/order/action/order_get_by_id.action';
-import { createApp } from '@/http';
-import { AppCommunicatorFake } from '@test/fake/communicator';
+import { orderGetByIdHttp } from '#/module/order/http/order_get_by_id.http';
+import { OrderGetById } from '#/module/order/action/order_get_by_id.action';
+import { createApp } from '#/http';
+import { AppCommunicatorFake } from '#test/fake/communicator';
 import { FastifyInstance } from 'fastify';
-import { pgConnect } from '@/core/pg/pg.instance';
+import { pgConnect } from '#/core/pg/pg.instance';
 import { testTransaction } from 'pg-transactional-tests';
-import { OrderDbFake } from '@test/fake/module/order/repository/order.db.fake';
+import { OrderDbFake } from '#test/fake/module/order/repository/order.db.fake';
 
 describe('HTTP Order Get By Id', () => {
   let app: FastifyInstance;

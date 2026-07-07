@@ -1,6 +1,6 @@
-import { IUserCommunicator } from '@/communicator/user.communicator.type';
-import { OK } from '@/lib';
-import { OrderDb } from '../repository/order.db';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { OK } from '#/lib';
+import { OrderDb } from '../repository/order.db.js';
 
 export class OrderSuccessArchive {
   constructor(

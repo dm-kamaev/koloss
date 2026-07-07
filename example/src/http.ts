@@ -1,13 +1,13 @@
 // ENTRY point for run http server
 
+import { fileURLToPath } from 'node:url';
 import Fastify, { FastifyInstance } from 'fastify';
 
-import { AppError } from '@/core/error/app.error';
-import { mountUserRoutes } from '@/module/user/user.http.router';
-import { mountOrderRoutes } from '@/module/order/order.http.router';
+import { AppError } from '#/core/error/app.error';
+import { mountUserRoutes } from '#user/user.http.router';
+import { mountOrderRoutes } from '#order/order.http.router';
 
-import { communicator } from './communicator';
-import { fileURLToPath } from 'node:url';
+import { communicator } from '#/communicator';
 
 export const appErrorLogger = {
   error: console.error,

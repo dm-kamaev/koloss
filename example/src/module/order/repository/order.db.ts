@@ -1,6 +1,6 @@
-import { pgConnect } from '@/core/pg/pg.instance';
-import { OrdersTable, SchemaDB } from '@/core/pg/pg.type';
-import { Order, OrderWithPrice } from '../entity/order.entity';
+import { pgConnect } from '#/core/pg/pg.instance';
+import { OrdersTable, SchemaDB } from '#/core/pg/pg.type';
+import { Order, OrderWithPrice } from '../entity/order.entity.js';
 import { Selectable } from 'kysely';
 
 export interface OrderProductRaw {

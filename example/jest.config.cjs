@@ -4,8 +4,11 @@ module.exports = {
   testMatch: ['**/test/**/*.test.ts'],
 
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@test/(.*)$': '<rootDir>/test/$1',
+    '^#user/(.*)$': '<rootDir>/src/module/user/$1',
+    '^#order/(.*)$': '<rootDir>/src/module/order/$1',
+    '^#/(.*)$': '<rootDir>/src/$1',
+    '^#test/(.*)$': '<rootDir>/test/$1',
+    '^(\\..*?)\\.js$': '$1',
   },
 
   transform: {

@@ -1,7 +1,7 @@
-import { OrderGetLastByUserId } from '@/module/order/action/order_get_last_by_user_id.action';
-import { OrderDbInMemoryFake } from '@test/fake/module/order/repository/order.db.in_memory.fake';
-import { UserDbInMemoryFake } from '@test/fake/module/user/repository/user.db.in_memory.fake';
-import { OrderRaw } from '@/module/order/repository/order.db';
+import { OrderGetLastByUserId } from '#/module/order/action/order_get_last_by_user_id.action';
+import { OrderDbInMemoryFake } from '#test/fake/module/order/repository/order.db.in_memory.fake';
+import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
+import { OrderRaw } from '#/module/order/repository/order.db';
 
 describe('OrderGetLastByUserId', () => {
   const userId = UserDbInMemoryFake.defaultUser.id;

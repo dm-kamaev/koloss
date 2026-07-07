@@ -1,7 +1,7 @@
-import { IUserCommunicator } from './communicator/user.communicator.type';
-// import { UserCommunicator } from './module/user/user.communicator';
-import { IOrderCommunicator } from './communicator/order.communicator.type';
-// import { OrderCommunicator } from './module/order/order.communicator';
+import { IUserCommunicator } from './communicator/user.communicator.type.js';
+// import { UserCommunicator } from './module/user/user.communicator.js';
+import { IOrderCommunicator } from './communicator/order.communicator.type.js';
+// import { OrderCommunicator } from './module/order/order.communicator.js';
 
 export interface ICommunicator {
   user: IUserCommunicator;
