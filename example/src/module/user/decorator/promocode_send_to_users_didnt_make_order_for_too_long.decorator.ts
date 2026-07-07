@@ -1,6 +1,6 @@
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
 
-export class PromoCodeSend {
+export class PromoCodeSendToUsersDidntMakeOrderForTooLong {
   constructor(private readonly promoCodeCreateToUsersDidntMakeOrderForTooLong: PromoCodeCreateToUsersDidntMakeOrderForTooLong) {}
 
   async act(inactivityDays: number) {

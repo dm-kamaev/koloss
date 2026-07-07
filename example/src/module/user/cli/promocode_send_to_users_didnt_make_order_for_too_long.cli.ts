@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { PromoCodeSend } from '../decorator/promocode_send.decorator.js';
+import { PromoCodeSendToUsersDidntMakeOrderForTooLong } from '#user/decorator/promocode_send.decorator.js';
 import { AsyncOK, OK } from '#/lib';
 
 function PromoSendInputDto(args: string[]) {
@@ -40,7 +40,9 @@ export async function promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
 
   console.log(`JOB: promoSendCli - checking for users inactive for more than ${parsedArgs.inactivityDays} days`);
 
-  await new PromoCodeSend(new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator)).act(parsedArgs.inactivityDays);
+  await new PromoCodeSendToUsersDidntMakeOrderForTooLong(new PromoCodeCreateToUsersDidntMakeOrderForTooLong(orderCommunicator)).act(
+    parsedArgs.inactivityDays,
+  );
 
   return OK;
 }
