@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { PromoCodeSendToUsersDidntMakeOrderForTooLong } from '#user/decorator/promocode_send.decorator.js';
+import { PromoCodeSendToUsersDidntMakeOrderForTooLong } from '#user/decorator/promocode_send_to_users_didnt_make_order_for_too_long.decorator';
 import { AsyncOK, OK } from '#/lib';
 
 function PromoSendInputDto(args: string[]) {
