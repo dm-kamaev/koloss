@@ -1,19 +1,8 @@
-import { z } from 'zod';
 import { AsyncOK, OK } from '#/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { PromoCodeCreateToUserAfterFulfilledConditionPromotionCtor } from '../action/promocode_create_to_user_after_fulfilled_condition_promotion.action.js';
 import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '../decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator.js';
-
-function BulkOrderPayloadDto(payload: Record<string, unknown>) {
-  const schema = z.object({
-    userId: z.number().int().positive(),
-    price: z.number().positive(),
-  });
-
-  return {
-    act: () => schema.parseAsync(payload),
-  };
-}
+import { OrderCreatedEventDto } from '#user/dto/order_created_event.dto';
 
 export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
   PromoCodeCreateToUserAfterFulfilledConditionPromotion,
@@ -24,7 +13,7 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   orderCommunicator: IOrderCommunicator;
   payload: Record<string, unknown>;
 }): AsyncOK {
-  const parsedPayload = await BulkOrderPayloadDto(payload).act();
+  const parsedPayload = await new OrderCreatedEventDto(payload).act();
 
   await new PromoCodeSendToUserAfterFulfilledConditionPromotion(
     new PromoCodeCreateToUserAfterFulfilledConditionPromotion(orderCommunicator),

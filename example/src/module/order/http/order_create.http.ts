@@ -4,22 +4,8 @@ import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { AfterOrderCreate } from '../decorator/after_order_create.decorator.js';
 import { OrderCreateEmailNotify } from '../notification/order_create_email.notify.js';
 import { OrderCreateMetric } from '../metric/order_create_metric.metric.js';
-import { z } from 'zod';
 import { UserExistGuard } from '../guard/user_exist.guard.js';
-
-// DTO
-const ProductSchema = z.object({
-  name: z.string(),
-  amount: z.number().int().positive(),
-  price: z.number().positive(),
-});
-
-const OrderCreateInputBodyDto = z.object({
-  user_id: z.number(),
-  products: z.array(ProductSchema).min(1),
-});
-
-type OrderCreateBody = z.infer<typeof OrderCreateInputBodyDto>;
+import { OrderCreateInputBodyDto, OrderCreateBody } from '../dto/order_create_input.dto.js';
 
 export function orderCreateHttp({
   app,
@@ -33,7 +19,7 @@ export function orderCreateHttp({
   app.post<{
     Body: OrderCreateBody;
   }>('/order', async function handler(req, reply) {
-    const { user_id: userId, products } = await OrderCreateInputBodyDto.parseAsync(req.body);
+    const { user_id: userId, products } = await new OrderCreateInputBodyDto(req.body).act();
 
     await new UserExistGuard(userCommunicator).act(userId);
 
