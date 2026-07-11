@@ -2,9 +2,36 @@
 
 This is a **template project**. Use it as a reference and starting point for building other projects with the `koloss` approach.
 
-*
-*
-*
+- [Layers](#layers)
+  - [HTTP, CLI, Consumer and etc](#http-cli-consumer-and-etc)
+    - [HTTP](#http)
+    - [CLI](#cli)
+    - [Consumer](#consumer)
+  - [Action (UseCase)](#action-usecase)
+  - [Decorator](#decorator)
+  - [Repository](#repository)
+  - [Entity](#entity)
+  - [Value Object](#value-object)
+  - [Cross module communication](#cross-module-communication)
+  - [DTO](#dto)
+  - [Guard](#guard)
+- [Entry point](#entry-point)
+  - [HTTP](#http-1)
+  - [CLI](#cli-1)
+  - [Consumer](#consumer-1)
+- [Don't use services](#dont-use-services)
+- [Shared code](#shared-code)
+- [Test](#test)
+  - [Low level](#low-level)
+  - [Middle level](#middle-level)
+  - [Up level](#up-level)
+- [Architecture Decisions](#architecture-decisions)
+  - [Loading modules](#loading-modules)
+  - [Entity composition via mixins](#entity-composition-via-mixins)
+  - [Value objects with behavior](#value-objects-with-behavior)
+  - [Per-call instantiation](#per-call-instantiation)
+  - [Communicators are the only cross-module API](#communicators-are-the-only-cross-module-api)
+- [TODO](#todo)
 
 ## Layers
 Every module (e.g. `src/module/user/`, `src/module/order/`) may contain some or all of these layers:
@@ -103,7 +130,6 @@ export function orderCreateHttp({
 
 #### CLI
 The CLI entry point (`src/cli.ts`) uses `parseArgs` from `node:util` to select a named job, then delegates. Routers register jobs with **dynamic `import()`** for lazy loading:
-
 ```ts
 // src/module/order/order.cli.router.ts
 import { AsyncOK } from '#/lib';
@@ -117,6 +143,9 @@ export const orderJobs: Record<string, () => AsyncOK> = {
   },
 };
 ```
+Lazy load module (`import`) provides loading only needed dependencies. It reduce memory consumtion and increase isolation code in runtime.
+Otherwise, running one command will load all commands and all modules for them.
+
 
 A CLI handler is a factory function that receives `{ ActionCtor, communicator, args }`. DTOs are classes with a `private static` Zod schema and an `act()` method:
 
@@ -145,7 +174,6 @@ return await action.act(parsedArgs.date);
 
 #### Consumer
 The consumer entry point (`src/consumer.ts`) connects via `kafkajs`, subscribes to a topic, and runs `eachMessage`. Consumer routers define entries:
-
 ```ts
 // src/module/user/user.consumer.router.ts
 import { communicator } from '#/communicator';
@@ -172,6 +200,7 @@ export const userConsumers: ConsumerDescriptor[] = [
   },
 ];
 ```
+Lazy load module (`import`) provides loading only needed dependencies. It reduce memory consumtion and increase isolation code in runtime. Otherwise, running one consumer will load all consumer and all modules for them.
 
 Consumer handlers validate payloads with a class-based DTO pattern and delegate to decorator-wrapped actions:
 ```ts
