@@ -2,29 +2,33 @@
 
 This is a **template project**. Use it as a reference and starting point for building other projects with the `koloss` approach.
 
+*
+*
+*
+
 ## Layers
 Every module (e.g. `src/module/user/`, `src/module/order/`) may contain some or all of these layers:
 ```
-http/         — Fastify route handlers per action
-cli/          — CLI handlers per action
+http/         — HTTP route handlers per action. Similarly for GraphQL (graphql), JSON-RPC (json_rpc), gRPC (grpc), SOAP (soap) and etc
+cli/          — CLI handlers per action. Jobs which invoke from command line by manual or by cron schedule
 consumer/     — Kafka/RabbitMQ/... consumer handlers
-dto/          — Input/output validation schemas (Zod classes)
-action/       — Use cases (classes with act() method)
-entity/       — Domain entities via mixin composition
-value_object/ — Domain value objects with behavior
-repository/   — Storage access (Database, S3, file system and etc)
-api/          — External services (example, service of processing payment and etc)
-decorator/    — Cross-cutting concerns (side effects, logging)
+dto/          — Input/output validation schemas (example, Zod classes)
+action/       — Use cases. Classes for perfoming a specific business operation. For example, `OrderCreate`. It has one public method `act()`.
+entity/       — Domain entities. Classes has core behaviours. For example, `Order`. It has unique identificator like `id`.
+value_object/ — Domain value objects with behavior. For example, `Money`, `Date`, `ScreenSize`. It's compared by value.
+repository/   — Storage access: Database (MySQL, Postgres, Redis and etc), S3, File system, API (external services) and etc.
+decorator/    — Cross-cutting concerns side effects: logging, prodduce data to external system and etc.
 guard/        — Authorization and policy checks (RBAC, ABAC)
-metric/       — Kafka metrics publishing
-notification/ — Email side effects
+metric/       — Instead using services create classes for specific bussiness operation with screaming name. For example, publishing order metrica via Kafka.
+notification/ — Instead using services create classes for specific bussiness operation with screaming name. For example, dispatch email to user after order create.
 *.communicator.ts     — Public API for cross-module calls
 *.http.router.ts      — Route registration
 *.cli.router.ts       — Command registration
-*.consumer.router.ts  — Kafka consumer registration
+*.consumer.router.ts  — Kafka/RabbitMQ consumer registration
 ```
 
 Not all modules have every layer. For example, the `user` module has no `guard/`, `metric/`, or `notification/` directories; the `order` module has no `consumer/` or `value_object/`.
+
 
 ### HTTP, CLI, Consumer and etc
 
@@ -46,7 +50,6 @@ export function mountOrderRoutes({ app, userCommunicator }: { app: FastifyInstan
 ```
 
 Handler route `POST /order` — DTOs live in a `dto/` subdirectory per module:
-
 ```ts
 // src/module/order/http/order_create.http.ts
 import type { FastifyInstance } from 'fastify';
@@ -112,30 +115,6 @@ export const orderJobs: Record<string, () => AsyncOK> = {
 A CLI handler is a factory function that receives `{ ActionCtor, communicator, args }`. DTOs are classes with a `private static` Zod schema and an `act()` method:
 
 ```ts
-// src/module/order/dto/order_success_archive_input.dto.ts
-import { parseArgs } from 'node:util';
-import { z } from 'zod';
-
-export class OrderSuccessArchiveInputDto {
-  private readonly values: { date?: string };
-
-  constructor(args: string[]) {
-    const { values } = parseArgs({
-      args: args.slice(3),
-      options: { date: { type: 'string' } },
-    });
-    this.values = values;
-  }
-
-  private static schema = z.object({
-    date: z.iso.datetime({ message: 'Invalid date format' }),
-  });
-
-  async act() {
-    return OrderSuccessArchiveInputDto.schema.parseAsync(this.values);
-  }
-}
-
 // src/module/order/cli/order_success_archive.cli.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { OrderSuccessArchiveCtor } from '#/module/order/action/order_success_archive.action';
@@ -189,28 +168,11 @@ export const userConsumers: ConsumerEntry[] = [
 ```
 
 Consumer handlers validate payloads with a class-based DTO pattern and delegate to decorator-wrapped actions:
-
 ```ts
-// src/module/user/dto/order_created_event.dto.ts
-import { z } from 'zod';
-
-export class OrderCreatedEventDto {
-  constructor(private readonly payload: Record<string, unknown>) {}
-
-  private static schema = z.object({
-    userId: z.number().int().positive(),
-    price: z.number().positive(),
-  });
-
-  async act() {
-    return OrderCreatedEventDto.schema.parseAsync(this.payload);
-  }
-}
-
 // src/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer.ts
 import { AsyncOK, OK } from '#/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '../decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator.js';
+import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '#user/decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator.js';
 import { OrderCreatedEventDto } from '#user/dto/order_created_event.dto';
 
 export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
@@ -223,15 +185,19 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   payload: Record<string, unknown>;
 }): AsyncOK {
   const parsedPayload = await new OrderCreatedEventDto(payload).act();
+
+  // send promocode via decorator
   await new PromoCodeSendToUserAfterFulfilledConditionPromotion(
+    // create promocode
     new PromoCodeCreateToUserAfterFulfilledConditionPromotion(orderCommunicator),
   ).act(parsedPayload);
+
   return OK;
 }
 ```
 
 ### Action (UseCase)
-Actions are classes with a single (public) `act()` method. They may receive cross-module communicators and DB classes as constructor parameters (with defaults for DI). Each action also exports a `*Ctor` type alias:
+Actions (`/action`) are classes with a single public method `act()`. They may receive cross-module communicators and DB classes as constructor parameters (with defaults for DI). Each action also exports a `*Ctor` type alias:
 
 ```ts
 // src/module/order/action/order_create.action.ts
@@ -254,7 +220,9 @@ export type OrderCreateCtor = typeof OrderCreate;
 ```
 
 ### Decorator
-Side effects (dispatch data, metrics, notifications) are implemented as **Decorator classes** that wrap Actions. Decorators call the wrapped action and run side effects after, returning the original data:
+The main purpose of decorator (`/decorator`) to add functional on the top of action class. For example,
+dispatch metrics, push notifications, sms or produce data to Kafka/RabbitMQ and etc.
+ **Decorator classes**  wrap action class then execute internal logic and pass forward data from method `act` to outside:
 
 ```ts
 // src/module/order/decorator/after_order_create.decorator.ts
@@ -274,13 +242,62 @@ export class AfterOrderCreate {
       this.orderCreateMetric.act({ id: order.id, countProducts: order.countProducts, price: order.price, createdAt: order.updatedAt, userId: user.id }),
     ]);
 
+    // value was pass forward
     return order;
   }
 }
 ```
 
-Generic decorators can wrap any object with an `act()` method using TypeScript generics:
+Example usage:
+```ts
+// src/module/order/http/order_create.http.ts
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { AfterOrderCreate } from '#order/decorator/after_order_create.decorator.js';
+import { OrderCreateEmailNotify } from '#order/notification/order_create_email.notify.js';
+import { OrderCreateMetric } from '#order/metric/order_create_metric.metric.js';
+import { OrderCreateInputBodyDto, OrderCreateBody } from '#order/dto/order_create_input.dto.js';
 
+export function orderCreateHttp({
+  app,
+  OrderCreate,
+  userCommunicator,
+}: {
+  app: FastifyInstance;
+  OrderCreate: OrderCreateCtor;
+  userCommunicator: IUserCommunicator;
+}) {
+  app.post<{
+    Body: OrderCreateBody;
+  }>('/order', async function handler(req, reply) {
+    const { user_id: userId, products } = await new OrderCreateInputBodyDto(req.body).act();
+
+    // send email and produce metrics to Kafka after create order
+    const order = await new AfterOrderCreate(
+      new OrderCreate(userCommunicator),
+      new OrderCreateEmailNotify(),
+      new OrderCreateMetric())
+    .act({
+      userId,
+      products,
+    });
+
+    const user = await order.getUser();
+
+    reply.status(201).send({
+      id: order.id,
+      price: order.price,
+      countProducts: order.countProducts,
+      updatedAt: order.updatedAt,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+  });
+}
+```
+
+Generic decorators can wrap any object with an `act()` method using TypeScript generics:
 ```ts
 // src/module/order/decorator/log_input.ts
 export class LogInput<T extends { act(...arg: any[]): Promise<any> }> {
@@ -302,34 +319,13 @@ export class LogOutput<T extends { act(...arg: any[]): Promise<any> }> {
 }
 ```
 
-Decorators can also wrap actions that produce **value objects** with behavior:
-
-```ts
-export class PromoCodeSendToUserAfterFulfilledConditionPromotion {
-  constructor(
-    private readonly promoCodeCreateToUserAfterFulfilledConditionPromotion: PromoCodeCreateToUserAfterFulfilledConditionPromotion,
-  ) {}
-
-  async act(data: { userId: number; price: number }) {
-    const promocode = await this.promoCodeCreateToUserAfterFulfilledConditionPromotion.act(data);
-
-    if (promocode) {
-      await promocode.sendToUserViaEmail({
-        subject: 'You earned a promocode!',
-        body: (code) => `Congratulation, you fulfilled promotion! Here is your promocode: ${code}`,
-      });
-    }
-
-    return promocode;
-  }
-}
-```
 
 ### Repository
-Layer for storage access (MySQL, Postgres, Redis, S3, file system and etc).
-For example with **Kysely** query builder on PostgreSQL. Each repository creates its own DB connection via `pgConnect.create()`. Fakes extend the real class and use in-memory storage for tests.
+Layer for storage access `/repository`: MySQL, Postgres, Redis, S3, File system External API  and etc.
+For example with **Kysely** query builder on PostgreSQL. Each repository creates its own DB connection via `pgConnect.create()`. ~~Fakes extend the real class and use in-memory storage for tests.~~
 
 ```ts
+// src/module/user/repository/user.db.ts
 import { NotFound } from '#/core/error/not_found.error';
 import { SchemaDB, UsersTable } from '#/core/pg/pg.type';
 import { pgConnect } from '#/core/pg/pg.instance';
@@ -356,24 +352,155 @@ export class UserDb {
 ```
 
 ### Entity
-Entities use **class mixins** — function-based composition with no ORM. A base class is extended through chained mixin functions:
+Entity classes (`/entity`) contain core domain logic. It has unique identificator (`id`) for compare between him.
+An entity is not just simple class data opposite a class with behavior (Rich Model instead of Anemic Model). And with all this, there are no setters.
 
+For entities with a small number of fields and limited behavior, a single class can be used:
 ```ts
-const OrderEntity = OrderWithCountProducts(
-  OrderWithPrice(OrderWithUpdatedAt(OrderWithUser(Order, userId, userCommunicator), updatedAt)),
-  products,
-);
+// src/module/order/entity/order.entity.ts
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+
+export class Order {
+  public readonly updatedAt = updatedAt;
+  constructor(public readonly id: number, userCommunicator: IUserCommunicator) {}
+
+  async getUser() {
+    return userCommunicator.getUserById(userId);
+  }
+
+}
+```
+Entity shouldn't use directly infrastructure. Infrastructure dependencies should be passed via constructor or parameters of method.
+
+But recommendation use **class mixins** for building complexity entity:
+```ts
+// src/module/order/entity/order.entity.ts
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { OrderProductRaw } from '../repository/order.db.js';
+
+type Constructor<T = object> = new (...args: any[]) => T;
+
+export class Order {
+  constructor(public readonly id: number) {}
+}
+
+// =========== Mixins ===========
+export function OrderWithUpdatedAt<TBase extends Constructor>(Base: TBase, updatedAt: Date) {
+  return class extends Base {
+    public readonly updatedAt = updatedAt;
+  };
+}
+
+/**
+ * total price of order
+ */
+export function OrderWithPrice<TBase extends Constructor>(Base: TBase, products: OrderProductRaw[]) {
+  return class extends Base {
+    get price() {
+      return products.reduce((acc, product) => acc + product.price * product.amount, 0);
+    }
+  };
+}
+
+export function OrderWithCountProducts<TBase extends Constructor>(Base: TBase, products: OrderProductRaw[]) {
+  return class extends Base {
+    get countProducts() {
+      return products.reduce((total, el) => total + el.amount, 0);
+    }
+  };
+}
+
+/**
+ * If we based on previous attached data
+ * export function OrderWithUser<TBase extends Constructor<{ userId: number }>>(
+ */
+
+export function OrderWithUser<TBase extends Constructor>(Base: TBase, userId: number, userCommunicator: IUserCommunicator) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
+    async getUser() {
+      return userCommunicator.getUserById(userId);
+    }
+  };
+}
+```
+This approach allows you to build the entity needed in a given specifc place in code.
+For example, you can create entity with needed attribute and methods without create "fat" entity () in every place of codebase.
+"Fat" entity create performance problem because code loading unused fields from database or any storage into process RAM.
+
+Example usage in action class:
+```ts
+// src/module/order/action/order_create.action.ts
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { OrderDb, OrderProductRaw } from '#/module/order/repository/order.db';
+import { Order, OrderWithCountProducts, OrderWithPrice, OrderWithUpdatedAt, OrderWithUser } from '#/module/order/entity/order.entity';
+
+export class OrderCreate {
+  constructor(
+    private readonly userCommunicator: IUserCommunicator,
+    private readonly orderDb = new OrderDb(),
+  ) {}
+
+  async act(orderData: { userId: number; products: OrderProductRaw[] }) {
+    const orderRaw = await this.orderDb.create(orderData);
+
+    // build order.entiry with needed fields and methods
+    const Order = OrderWithCountProducts(
+      OrderWithPrice(
+        OrderWithUpdatedAt(OrderWithUser(Order, orderRaw.userId, this.userCommunicator), orderRaw.updatedAt),
+        orderRaw.products,
+      ),
+      orderRaw.products,
+    );
+
+    return new Order(orderRaw.id);
+  }
+}
 ```
 
+It often doesn't make sense to put behavior for all occasions in one entity (event through a mixin class). You may create some entities:
+```ts
+// ======== Order (User) in Web/Mobile App ========
+export class OrderUser {
+  constructor(public readonly id: number) {}
+}
+
+export function OrderUserWithCountProducts<TBase extends Constructor>(Base: TBase, products: OrderProductRaw[]) {
+  return class extends Base {
+    get countProducts() {
+      return products.reduce((total, el) => total + el.amount, 0);
+    }
+  };
+}
+
+
+// ======== Order (Support) in Admin panel ========
+export class OrderSupport {
+  constructor(public readonly id: number) {}
+}
+
+export function OrderWithPrice<TBase extends Constructor>(Base: TBase, products: OrderProductRaw[]) {
+  return class extends Base {
+    get price() {
+      return products.reduce((acc, product) => acc + product.price * product.amount, 0);
+    }
+  };
+}
+```
+
+
 ### Value Object
-Value objects live in `value_object/` and encapsulate domain logic with behavior. They are not entities (no identity) and not actions (no use-case orchestration):
+Value objects live in `value_object/` and encapsulate domain logic with behavior.For example, `Money`, `Date`, `ScreenSize`. It's compared by value.
 
 ```ts
 // src/module/user/value_object/user_promocode.value_object.ts
 export class UserPromoCode {
   constructor(
     private readonly user: UserWithEmailInstance,
-    private readonly code = this.generatePromocode(),
+    public readonly code = this.generatePromocode(),
   ) {}
 
   private generatePromocode(): string { /* ... */ }
@@ -384,8 +511,14 @@ export class UserPromoCode {
   ) {
     await emailClient.sendText({ email: this.user.email, subject, message: body(this.code) });
   }
+
+  equal(userPromocode: UserPromoCode): boolean {
+    return this.code === this.userPromocode.code;
+  }
 }
 ```
+Value object shouldn't use directly infrastructure. Infrastructure dependencies should be passed via constructor or parameters of method.
+
 
 ### Cross module communication
 Modules (`user`, `order`) communicate strictly through **communicator interfaces** (`src/communicator/*.communicator.type.ts`). No module directly imports another module's Actions, Repositories, or Entities.
