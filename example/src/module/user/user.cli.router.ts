@@ -1,6 +1,6 @@
 import { AsyncOK } from '#/lib';
 import { communicator } from '#/communicator';
-import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '#user/action/promocode_create_to_users_didnt_make_order_for_too_long.action.js';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '#user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 
 export const userJobs: Record<string, () => AsyncOK> = {
   promoCodeSendToUsersDidntMakeOrderForTooLong: async (): AsyncOK => {

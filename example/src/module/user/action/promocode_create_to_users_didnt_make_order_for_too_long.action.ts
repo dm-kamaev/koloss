@@ -1,6 +1,6 @@
-import { UserDb } from '../repository/user.db.js';
+import { UserDb } from '#user/repository/user.db';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { UserPromoCode } from '../entity/user_promocode.entity.js';
+import { UserPromoCode } from '#user/value_object/user_promocode.value_object';
 
 export class PromoCodeCreateToUsersDidntMakeOrderForTooLong {
   constructor(
@@ -21,12 +21,6 @@ export class PromoCodeCreateToUsersDidntMakeOrderForTooLong {
         // No orders ever, consider as inactive
         promocodes.push(new UserPromoCode(user));
 
-        // await emailClientInstance.dispatch(
-        //   user.email,
-        //   'We miss you!',
-        //   `You haven't visited us for long time! Here is a promocode for you: ${promocode}`,
-        // );
-        // console.log(`Sent promo to user ${user.id} (no previous orders)`);
         continue;
       }
 
@@ -35,13 +29,7 @@ export class PromoCodeCreateToUsersDidntMakeOrderForTooLong {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays > inactivityDays) {
-        // console.log('emailClientInstance.dispatch', ++i);
         promocodes.push(new UserPromoCode(user));
-        // await emailClientInstance.dispatch(
-        //   user.email,
-        //   'We miss you!',
-        //   `You haven't visited us for long time! Here is a promocode for you: ${promocode}`,
-        // );
         console.log(`Sent promo to user ${user.id} (last order ${diffDays} days ago)`);
       }
     }

@@ -1,5 +1,5 @@
 import { OrdersCountOfUser } from '#/module/order/action/orders_count_of_user.action';
-import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake.js';
+import { OrderDbInMemoryFake } from '../../../../fake/module/order/repository/order.db.in_memory.fake';
 
 describe('OrdersCountOfUser', () => {
   it('should return the number of orders for a given user', async () => {

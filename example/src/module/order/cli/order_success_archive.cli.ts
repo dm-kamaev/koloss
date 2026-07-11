@@ -1,6 +1,6 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { OrderSuccessArchiveCtor } from '#/module/order/action/order_success_archive.action';
-import { OrderSuccessArchiveInputDto } from '../dto/order_success_archive_input.dto.js';
+import { OrderSuccessArchiveInputDto } from '../dto/order_success_archive_input.dto';
 
 export async function orderSuccessArchiveCli({
   userCommunicator,

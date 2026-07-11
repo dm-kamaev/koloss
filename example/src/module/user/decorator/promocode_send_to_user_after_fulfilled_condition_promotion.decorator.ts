@@ -1,4 +1,4 @@
-import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from '../action/promocode_create_to_user_after_fulfilled_condition_promotion.action.js';
+import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from '../action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
 
 export class PromoCodeSendToUserAfterFulfilledConditionPromotion {
   constructor(

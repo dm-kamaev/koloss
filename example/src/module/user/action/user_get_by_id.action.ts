@@ -1,6 +1,6 @@
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { UserDb } from '../repository/user.db.js';
-import { User, UserWithEmail, UserWithOrdersCount } from '../entity/user.entity.js';
+import { UserDb } from '../repository/user.db';
+import { User, UserWithEmail, UserWithOrdersCount } from '../entity/user.entity';
 
 export class UserGetById {
   constructor(

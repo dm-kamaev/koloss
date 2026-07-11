@@ -3,7 +3,7 @@ import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in
 import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
 import { OrderRaw } from '#/module/order/repository/order.db';
 import { AppCommunicatorFake } from '#test/fake/communicator';
-import { UserPromoCode } from '#/module/user/entity/user_promocode.entity';
+import { UserPromoCode } from '#/module/user/value_object/user_promocode.value_object';
 import { emailClientInstance } from '#/core/email/email_client.instance';
 
 describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {

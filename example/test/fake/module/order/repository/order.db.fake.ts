@@ -1,7 +1,7 @@
 import { OrderDb, OrderRaw, OrderProductRaw } from '#/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake.js';
+import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake';
 import { OrderStatus } from '#/core/pg/pg.type';
-import { OrderDbInMemoryFake } from './order.db.in_memory.fake.js';
+import { OrderDbInMemoryFake } from './order.db.in_memory.fake';
 
 export class OrderDbFake extends OrderDb {
   // TODO: load from db before start test

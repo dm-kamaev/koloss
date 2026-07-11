@@ -1,5 +1,5 @@
-import { OrderDb } from '../repository/order.db.js';
-import { OrderRaw } from '../repository/order.db.js';
+import { OrderDb } from '../repository/order.db';
+import { OrderRaw } from '../repository/order.db';
 
 export class OrderGetLastByUserId {
   constructor(private readonly orderDb = new OrderDb()) {}

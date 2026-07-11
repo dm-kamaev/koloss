@@ -1,6 +1,6 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { OK } from '#/lib';
-import { OrderDb } from '../repository/order.db.js';
+import { OrderDb } from '../repository/order.db';
 
 export class OrderSuccessArchive {
   constructor(

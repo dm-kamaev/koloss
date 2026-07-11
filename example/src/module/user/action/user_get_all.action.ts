@@ -1,4 +1,4 @@
-import { UserDb } from '../repository/user.db.js';
+import { UserDb } from '../repository/user.db';
 
 export class UserGetAll {
   constructor(private readonly userDb = new UserDb()) {}

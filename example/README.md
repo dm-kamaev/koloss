@@ -26,8 +26,14 @@ notification/ — Instead using services create classes for specific bussiness o
 *.cli.router.ts       — Command registration
 *.consumer.router.ts  — Kafka/RabbitMQ consumer registration
 ```
+Most of the layers is optional.
 
-Not all modules have every layer. For example, the `user` module has no `guard/`, `metric/`, or `notification/` directories; the `order` module has no `consumer/` or `value_object/`.
+* Minimal  files for adding new http handler: `${module_name}.http.router.ts -> http/${entity}_${action_name}.http.ts -> action/${entity}_${action}.action.ts`. Example: `user.http.router.ts -> http/user_get_by_id.http.ts -> action/user_get_by_id.action.ts`
+
+* Minimal  files for adding new cli command: `${module_name}.cli.router.ts -> cli/${entity}_${action_name}.cli.ts -> action/${entity}_${action}.action.ts`. Example: `user.cli.router.ts -> cli/promocode_send_to_users_didnt_make_order_for_too_long.cli.ts -> src/module/user/action/promocode_create_to_users_didnt_make_order_for_too_long.action.ts`
+
+* Minimal  files for adding new consumer: `${module_name}.consumer.router.ts -> consumer/${entity}_${action_name}.cli.ts -> action/${entity}_${action}.action.ts`. Example: `user.consumer.router.ts -> consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer.ts -> action/promocode_create_to_user_after_fulfilled_condition_promotion.action.ts`
+
 
 
 ### HTTP, CLI, Consumer and etc
@@ -321,8 +327,10 @@ export class LogOutput<T extends { act(...arg: any[]): Promise<any> }> {
 
 
 ### Repository
-Layer for storage access `/repository`: MySQL, Postgres, Redis, S3, File system External API  and etc.
-For example with **Kysely** query builder on PostgreSQL. Each repository creates its own DB connection via `pgConnect.create()`. ~~Fakes extend the real class and use in-memory storage for tests.~~
+Layer for persist and extract data from different storages ()`/repository`): MySQL, Postgres, Redis, S3, File system, External API and etc. The main task of repository is isolation other application layers from details of storage.
+Only this layer known about how load and persist data with sql,http api or use .somehow else.
+
+Example repository (`user.db.ts`) with **Kysely** query builder on PostgreSQL. Each repository creates its own DB connection via `pgConnect.create()`.
 
 ```ts
 // src/module/user/repository/user.db.ts
@@ -350,6 +358,7 @@ export class UserDb {
   }
 }
 ```
+
 
 ### Entity
 Entity classes (`/entity`) contain core domain logic. It has unique identificator (`id`) for compare between him.
@@ -692,7 +701,7 @@ These are orchestrated by **Decorator** classes. Metrics and notification live i
 
 ### Low level
 
-**Pure unit tests** (`test/low_level/`). No DB, no external services. Inject `AppCommunicatorFake` (returns canned responses) and `*DbInMemoryFake` (extends real DB with in-memory arrays).
+**Pure unit tests** (`test/low_level/`). No DB, no external services. Inject `AppCommunicatorFake` (returns canned responses) and `*DbInMemoryFake` (extends real DB with in-memory arrays). Fakes extend the real class and use in-memory storage for tests (TODO: add information repository).
 
 ```ts
 const userCommunicator = new AppCommunicatorFake().user;

@@ -1,4 +1,4 @@
-import { kafkaInstance } from './kafka_client.instance.js';
+import { kafkaInstance } from './kafka_client.instance';
 
 export class KafkaProducer {
   constructor(private readonly kafka = kafkaInstance) {}
