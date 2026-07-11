@@ -599,7 +599,7 @@ export type OrderGetByIdCtor = typeof OrderGetById;
 ```
 
 ### DTO
-Input/Output validation uses **Zod** schemas defined in `dto/` per module. Each DTO is a class with a module-level schema and a single `act(body)` method:
+Input/Output validation uses schemas (example, **Zod**, **TypeBox**) defined in `dto/` per module. Each DTO is a class with a module-level schema and a single `act(body)` method:
 
 ```ts
 // src/module/order/dto/order_create_input.dto.ts
@@ -624,14 +624,14 @@ export class OrderCreateInputBodyDto {
   }
 }
 
-export type OrderCreateBody = Awaited<ReturnType<OrderCreateInputBodyDto['act']>>;
+export type OrderCreateBody = z.infer<typeof schema>;
 ```
 
 CLI parsing (`parseArgs`) lives in the CLI handler, not the DTO — the DTO receives the already-parsed object:
 
 ```ts
 // src/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli.ts
-const { values } = parseArgs({
+const { values } = util.parseArgs({
   args: args.slice(3),
   options: { inactivityDays: { type: 'string', short: 'd' } },
 });
