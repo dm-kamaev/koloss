@@ -19,4 +19,4 @@ export class OrderCreateInputBodyDto {
   }
 }
 
-export type OrderCreateBody = Awaited<ReturnType<OrderCreateInputBodyDto['act']>>;
+export type OrderCreateBody = z.infer<typeof schema>;
