@@ -61,11 +61,11 @@ Handler route `POST /order` — DTOs live in a `dto/` subdirectory per module:
 import type { FastifyInstance } from 'fastify';
 import { OrderCreateCtor } from '#/module/order/action/order_create.action';
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { AfterOrderCreate } from '../decorator/after_order_create.decorator.js';
-import { OrderCreateEmailNotify } from '../notification/order_create_email.notify.js';
-import { OrderCreateMetric } from '../metric/order_create_metric.metric.js';
-import { UserExistGuard } from '../guard/user_exist.guard.js';
-import { OrderCreateInputBodyDto, OrderCreateBody } from '../dto/order_create_input.dto.js';
+import { AfterOrderCreate } from '../decorator/after_order_create.decorator';
+import { OrderCreateEmailNotify } from '../notification/order_create_email.notify';
+import { OrderCreateMetric } from '../metric/order_create_metric.metric';
+import { UserExistGuard } from '../guard/user_exist.guard';
+import { OrderCreateInputBodyDto, OrderCreateBody } from '../dto/order_create_input.dto';
 
 export function orderCreateHttp({
   app,
@@ -79,7 +79,7 @@ export function orderCreateHttp({
   app.post<{
     Body: OrderCreateBody;
   }>('/order', async function handler(req, reply) {
-    const { user_id: userId, products } = await new OrderCreateInputBodyDto(req.body).act();
+    const { user_id: userId, products } = await new OrderCreateInputBodyDto().act(req.body);
 
     await new UserExistGuard(userCommunicator).act(userId);
 
@@ -123,8 +123,8 @@ A CLI handler is a factory function that receives `{ ActionCtor, communicator, a
 ```ts
 // src/module/order/cli/order_success_archive.cli.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderSuccessArchiveCtor } from '#/module/order/action/order_success_archive.action';
-import { OrderSuccessArchiveInputDto } from '../dto/order_success_archive_input.dto.js';
+import { OrderSuccessArchiveCtor } from '#order/module/order/action/order_success_archive.action';
+import { OrderSuccessArchiveInputDto } from '#order/dto/order_success_archive_input.dto';
 
 export async function orderSuccessArchiveCli({
   OrderSuccessArchive,
@@ -135,9 +135,11 @@ export async function orderSuccessArchiveCli({
   userCommunicator: IUserCommunicator;
   args: string[];
 }) {
-  const parsedArgs = await new OrderSuccessArchiveInputDto(args).act();
+  const parsedArgs = await new OrderSuccessArchiveInputDto().act(args);
+
   const action = new OrderSuccessArchive(userCommunicator);
-  return await action.act(parsedArgs.date);
+
+return await action.act(parsedArgs.date);
 }
 ```
 
@@ -147,7 +149,7 @@ The consumer entry point (`src/consumer.ts`) connects via `kafkajs`, subscribes 
 ```ts
 // src/module/user/user.consumer.router.ts
 import { communicator } from '#/communicator';
-import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from './action/promocode_create_to_user_after_fulfilled_condition_promotion.action.js';
+import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
 
 export interface ConsumerEntry {
   name: string;
@@ -178,7 +180,7 @@ Consumer handlers validate payloads with a class-based DTO pattern and delegate 
 // src/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer.ts
 import { AsyncOK, OK } from '#/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '#user/decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator.js';
+import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '#user/decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator';
 import { OrderCreatedEventDto } from '#user/dto/order_created_event.dto';
 
 export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
@@ -190,7 +192,7 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   orderCommunicator: IOrderCommunicator;
   payload: Record<string, unknown>;
 }): AsyncOK {
-  const parsedPayload = await new OrderCreatedEventDto(payload).act();
+  const parsedPayload = await new OrderCreatedEventDto().act(payload);
 
   // send promocode via decorator
   await new PromoCodeSendToUserAfterFulfilledConditionPromotion(
@@ -258,10 +260,10 @@ Example usage:
 ```ts
 // src/module/order/http/order_create.http.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { AfterOrderCreate } from '#order/decorator/after_order_create.decorator.js';
-import { OrderCreateEmailNotify } from '#order/notification/order_create_email.notify.js';
-import { OrderCreateMetric } from '#order/metric/order_create_metric.metric.js';
-import { OrderCreateInputBodyDto, OrderCreateBody } from '#order/dto/order_create_input.dto.js';
+import { AfterOrderCreate } from '#order/decorator/after_order_create.decorator';
+import { OrderCreateEmailNotify } from '#order/notification/order_create_email.notify';
+import { OrderCreateMetric } from '#order/metric/order_create_metric.metric';
+import { OrderCreateInputBodyDto, OrderCreateBody } from '#order/dto/order_create_input.dto';
 
 export function orderCreateHttp({
   app,
@@ -275,7 +277,7 @@ export function orderCreateHttp({
   app.post<{
     Body: OrderCreateBody;
   }>('/order', async function handler(req, reply) {
-    const { user_id: userId, products } = await new OrderCreateInputBodyDto(req.body).act();
+    const { user_id: userId, products } = await new OrderCreateInputBodyDto().act(req.body);
 
     // send email and produce metrics to Kafka after create order
     const order = await new AfterOrderCreate(
@@ -385,7 +387,7 @@ But recommendation use **class mixins** for building complexity entity:
 ```ts
 // src/module/order/entity/order.entity.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderProductRaw } from '../repository/order.db.js';
+import { OrderProductRaw } from '../repository/order.db';
 
 type Constructor<T = object> = new (...args: any[]) => T;
 
@@ -545,8 +547,8 @@ Class communicator can invoke only action class but can't directly use repositor
 // src/module/user/user.communicator.ts
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { UserGetById } from '#user/action/user_get_by_id.action.js';
-import { UserExistWithId } from '#user/action/user_exist_with_id.action.js';
+import { UserGetById } from '#user/action/user_get_by_id.action';
+import { UserExistWithId } from '#user/action/user_exist_with_id.action';
 
 export class UserCommunicator implements IUserCommunicator {
   constructor(
@@ -580,7 +582,7 @@ Example usage:
 ```ts
 //src/module/order/action/order_get_by_id.action.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderDb } from '#order/repository/order.db.js';
+import { OrderDb } from '#order/repository/order.db';
 
 export class OrderGetById {
   constructor(
@@ -601,6 +603,7 @@ export type OrderGetByIdCtor = typeof OrderGetById;
 ### DTO
 Input/Output validation uses schemas (example, **Zod**, **TypeBox**) defined in `dto/` per module. Each DTO is a class with a module-level schema and a single `act(body)` method:
 
+#### HTTP
 ```ts
 // src/module/order/dto/order_create_input.dto.ts
 import { z } from 'zod';
@@ -624,14 +627,18 @@ export class OrderCreateInputBodyDto {
   }
 }
 
+// inferred type from schema. You can use for route typing
 export type OrderCreateBody = z.infer<typeof schema>;
 ```
 
+#### CLI
 CLI parsing (`parseArgs`) lives in the CLI handler, not the DTO — the DTO receives the already-parsed object:
 
 ```ts
 // src/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli.ts
-const { values } = util.parseArgs({
+import { parseArgs } from 'node:util';
+
+const { values } = parseArgs({
   args: args.slice(3),
   options: { inactivityDays: { type: 'string', short: 'd' } },
 });
@@ -700,36 +707,256 @@ These are orchestrated by **Decorator** classes. Metrics and notification live i
 - **`src/core/email/`** — `EmailClient` / `EmailSdk` (stub that logs to console).
 
 ## Test
+Fake approach
+```ts
+// test/fake/communicator.ts
+import { AppCommunicator } from '#/communicator';
+import { UserCommunicatorFake } from './module/user/user.communicator';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { OrderCommunicatorFake } from './module/order/order.communicator';
+
+export class AppCommunicatorFake extends AppCommunicator {
+  private readonly UserCommunicator: typeof UserCommunicatorFake;
+  private readonly OrderCommunicator: typeof OrderCommunicatorFake;
+
+  constructor({
+    UserCommunicatorCtor,
+    OrderCommunicatorCtor,
+  }: {
+    UserCommunicatorCtor?: typeof UserCommunicatorFake;
+    OrderCommunicatorCtor?: typeof OrderCommunicatorFake;
+  } = {}) {
+    super();
+
+    this.UserCommunicator = UserCommunicatorCtor || UserCommunicatorFake;
+    this.OrderCommunicator = OrderCommunicatorCtor || OrderCommunicatorFake;
+  }
+  get user() {
+    return this.factory.new(this.UserCommunicator, (Class) => new Class(this.order));
+  }
+
+  get order(): IOrderCommunicator {
+    return this.factory.new(this.OrderCommunicator, (Class) => new Class(this.user));
+  }
+}
+```
 
 ### Low level
-
 **Pure unit tests** (`test/low_level/`). No DB, no external services. Inject `AppCommunicatorFake` (returns canned responses) and `*DbInMemoryFake` (extends real DB with in-memory arrays). Fakes extend the real class and use in-memory storage for tests (TODO: add information repository).
 
 ```ts
-const userCommunicator = new AppCommunicatorFake().user;
-const orderDb = new OrderDbInMemoryFake();
-const orderCreate = new OrderCreate(userCommunicator, orderDb);
-const orderEntity = await orderCreate.act(orderData);
+// test/low_level/module/order/action/order_get_by_id.action.test.ts
+import { OrderGetById } from '#/module/order/action/order_get_by_id.action';
+import { OrderDbInMemoryFake } from '#test/fake/module/order/repository/order.db.in_memory.fake';
+import { OrderRaw } from '#/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
+import { AppCommunicatorFake } from '#test/fake/communicator';
+
+describe('OrderGetById', () => {
+  it('should return an order with user information', async () => {
+    const orderId = 1;
+    const order: OrderRaw = {
+      id: orderId,
+      userId: UserDbInMemoryFake.defaultUser.id,
+      products: [],
+      price: 0,
+      status: 'pending',
+      updatedAt: new Date(),
+    };
+
+    const userCommunicator = new AppCommunicatorFake().user;
+    const orderDb = new OrderDbInMemoryFake({ orders: [order] });
+
+    const orderGetById = new OrderGetById(userCommunicator, orderDb);
+    const result = await orderGetById.act({ orderId });
+
+    expect(result.id).toBe(orderId);
+    expect(result.user.id).toBe(UserDbInMemoryFake.defaultUser.id);
+  });
+});
+```
+
+In memory implementation of repository:
+```ts
+// test/fake/module/order/repository/order.db.in_memory.fake.ts
+import { OrderDb, OrderRaw, OrderProductRaw } from '#/module/order/repository/order.db';
+import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake';
+import { Order, OrderWithPrice } from '#/module/order/entity/order.entity';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+
+export class OrderDbInMemoryFake extends OrderDb {
+  static readonly defaultOrder: OrderRaw = {
+    id: 1,
+    userId: UserDbInMemoryFake.defaultUser.id,
+    products: [{ name: 'Apple', amount: 1, price: 10 }],
+    price: 10,
+    status: 'completed',
+    updatedAt: new Date(),
+  };
+
+  private _orders: OrderRaw[] = [OrderDbInMemoryFake.defaultOrder];
+
+  constructor({ stubs, orders }: { stubs?: StubPropOfInstance<typeof OrderDbInMemoryFake>; orders?: OrderRaw[] } = {}) {
+    super();
+
+    this._orders = orders ?? [OrderDbInMemoryFake.defaultOrder];
+
+    overridePropsOfObject(this, stubs || {});
+  }
+
+  async getById(orderId: number): Promise<OrderRaw> {
+    const order = this._orders.find((o) => o.id === orderId);
+    if (!order) {
+      throw new Error(`Not found order with id: ${orderId}`);
+    }
+    return order;
+  }
+}
 ```
 
 ### Middle level
-
-**Integration tests** (`test/middle_level/`) with real PostgreSQL via Docker. Kafka and email are auto-mocked via `jest.mock()` in `test/jest/setup.ts`. Uses `pg-transactional-tests` (`testTransaction.start()` / `testTransaction.rollback()`) for rollback isolation, `pgConnect.rebuild()` before each test, and `Fastify.inject()` for HTTP testing without a real server.
+**Super Lightweight integration tests** (`test/middle_level/`) with real Database (for example, PostgreSQL via Docker). Other service (Kafka, Email, API) are auto-mocked via `jest.mock()` in `test/jest/setup.ts`. Uses [pg-transactional-tests](https://github.com/romeerez/pg-transactional-tests), [mysql-transactional-tests](https://www.npmjs.com/package/mysql-transactional-tests) for run test in isoaltion transaction (`testTransaction.start()` / `testTransaction.rollback()`). `Fastify.inject()` uses for HTTP testing without a real http server.
 
 Covers HTTP, CLI, and consumer handlers:
-- `test/middle_level/module/order/http/` — HTTP integration tests
-- `test/middle_level/module/order/cli/` — CLI integration tests
-- `test/middle_level/module/user/cli/` — CLI integration tests
-- `test/middle_level/module/user/consumer/` — Consumer integration tests
+- `test/middle_level/module/${module_name}/http/` — HTTP integration tests
+- `test/middle_level/module/${module_name}/cli/` — CLI integration tests
+- `test/middle_level/module/${module_name}/consumer/` — Consumer integration tests
+
+Example test for http:
+```ts
+// test/middle_level/module/order/http/order_create.http.test.ts
+import { orderCreateHttp } from '#/module/order/http/order_create.http';
+import { OrderCreate } from '#/module/order/action/order_create.action';
+import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
+import { createApp } from '#/http';
+import { AppError } from '#/core/error/app.error';
+import { NotFound } from '#/core/error/not_found.error';
+import { createMockClass } from '#/lib_test';
+import { kafkaInstance } from '#/core/kafka/kafka_client.instance';
+import { emailClientInstance } from '#/core/email/email_client.instance';
+import { AppCommunicatorFake } from '#test/fake/communicator';
+import { FastifyInstance } from 'fastify';
+import { pgConnect } from '#/core/pg/pg.instance';
+import { testTransaction } from 'pg-transactional-tests';
+import { OrderDbFake } from '#test/fake/module/order/repository/order.db.fake';
+
+describe('HTTP Order Create', () => {
+  let app: FastifyInstance;
+
+  beforeEach(async () => {
+    app = createApp();
+    await pgConnect.rebuild();
+    await testTransaction.start();
+  });
+
+  afterEach(async () => {
+    app.close();
+    await testTransaction.rollback();
+  });
+
+  afterAll(async () => {
+    await pgConnect.destroy();
+  });
+
+  it('should create an order and return 201', async () => {
+    const products = [
+      { name: 'Banana', amount: 4, price: 10 },
+      { name: 'Milk', amount: 32, price: 20 },
+    ];
+
+    const orderDb = new OrderDbFake();
+
+    const countBefore = Number(await orderDb.countAll());
+
+    orderCreateHttp({
+      app,
+      OrderCreate,
+      userCommunicator: new AppCommunicatorFake().user,
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/order',
+      payload: {
+        user_id: 1234,
+        products,
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const body = response.json();
+
+    expect(body.id).toEqual(expect.any(Number));
+    expect(body.price).toBe(680);
+    expect(body.countProducts).toBe(36);
+    expect(body.user.id).toBe(1234);
+    expect(body.updatedAt).toBeDefined();
+
+    const countAfter = Number(await orderDb.countAll());
+    expect(countAfter).toBe(countBefore + 1);
+
+    expect(kafkaInstance.send).toHaveBeenCalledTimes(1);
+    expect(emailClientInstance.dispatch).toHaveBeenCalledTimes(1);
+
+    expect(kafkaInstance.send).toHaveBeenCalledWith('order_metrics', {
+      key: String(body.id),
+      value: JSON.stringify({
+        id: body.id,
+        price: body.price,
+        countProducts: body.countProducts,
+        createdAt: new Date(body.updatedAt),
+        userId: body.user.id,
+      }),
+    });
+
+    expect(emailClientInstance.dispatch).toHaveBeenCalledWith('test@example.com', expect.any(String), expect.any(String));
+  });
+
+  it('should return 404 if user is not found', async () => {
+    const userId = 9999; // Non-existent user ID
+    const products = [
+      { name: 'Banana', amount: 4, price: 10 },
+      { name: 'Milk', amount: 32, price: 20 },
+    ];
+
+    const orderDb = new OrderDbFake();
+    const countBefore = Number(await orderDb.countAll());
+
+    const UserCommunicatorCtor = createMockClass(UserCommunicatorFake, { existUserWithId: async (id: number) => id !== userId });
+
+    orderCreateHttp({
+      app,
+      OrderCreate,
+      userCommunicator: new AppCommunicatorFake({ UserCommunicatorCtor }).user,
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/order',
+      payload: {
+        user_id: userId,
+        products,
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+    const body = JSON.parse(response.body) as AppError;
+    expect(body.code).toBe(new NotFound('').code);
+
+    const countAfter = Number(await orderDb.countAll());
+    expect(countAfter).toBe(countBefore);
+  });
+});
+
+```
+
 
 ### Up level
-
 **Not yet implemented**. Planned: TestContainers, real HTTP servers, minimum stubs.
 
 # Architecture Decisions
 
 ## Loading modules
-
 Async loading module not supported because `require` uses `Proxy` that decreases performance (code can't extract information about method). Instead, the app uses synchronous CommonJS `require()` via `createRequire` for lazy module loading. A Proxy-based alternative (`src/communicator_proxy_version.ts`) demonstrates the trade-off.
 
 - **HTTP**: Modules loaded statically at import time. Communicator lazily resolves cross-module dependencies on first property access.
@@ -737,22 +964,17 @@ Async loading module not supported because `require` uses `Proxy` that decreases
 - **Consumer**: Handler functions use dynamic `import()` to load consumer logic.
 
 ## Entity composition via mixins
-
 Entities are stateless class-factory functions that return anonymous classes extending a base. Each entity is composed at the Action level with the exact data it needs — no ORM involved.
 
 ## Value objects with behavior
-
 Domain concepts that combine data with logic (e.g., promo code generation and email delivery) live in `value_object/`. They are instantiated by Actions or Decorators and encapsulate business rules without needing their own repository or use case.
 
 ## Per-call instantiation
-
 The `Factory` class creates proxy objects where every method call gets a **fresh instance** of the class. This is the default. Use `factory.singleton()` for caching. There is no DI container.
 
 ## Communicators are the only cross-module API
-
 All cross-module access goes through communicator interfaces. No module directly imports another module's internals.
 
 # TODO
-
 * Integration view (server render jsx)
 * Integration async background task (consumer pattern is partially implemented via Kafka)
