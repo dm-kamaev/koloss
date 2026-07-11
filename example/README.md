@@ -599,41 +599,43 @@ export type OrderGetByIdCtor = typeof OrderGetById;
 ```
 
 ### DTO
-Input/Output validation uses **Zod** schemas defined in `dto/` per module. Two patterns exist:
-
-**Exported Zod schema** — used in HTTP handlers for direct parsing:
+Input/Output validation uses **Zod** schemas defined in `dto/` per module. Each DTO is a class with a module-level schema and a single `act(body)` method:
 
 ```ts
 // src/module/order/dto/order_create_input.dto.ts
-export const OrderCreateInputBodyDto = z.object({
+import { z } from 'zod';
+
+const ProductSchema = z.object({
+  name: z.string(),
+  amount: z.number().int().positive(),
+  price: z.number().positive(),
+});
+
+const schema = z.object({
   user_id: z.number(),
   products: z.array(ProductSchema).min(1),
 });
-```
 
-**Class with `act()` method and `private static` schema** — used in CLI and consumer handlers for composability:
+export class OrderCreateInputBodyDto {
+  private readonly schema = schema;
 
-```ts
-// src/module/user/dto/promocode_send_input.dto.ts
-export class PromoSendInputDto {
-  private readonly values: { inactivityDays?: string };
-
-  constructor(args: string[]) {
-    const { values } = parseArgs({
-      args: args.slice(3),
-      options: { inactivityDays: { type: 'string', short: 'd' } },
-    });
-    this.values = values;
-  }
-
-  private static schema = z.object({
-    inactivityDays: z.coerce.number().int().positive({ message: 'Inactivity days must be a positive integer' }),
-  });
-
-  async act() {
-    return PromoSendInputDto.schema.parseAsync(this.values);
+  async act(body: unknown) {
+    return this.schema.parseAsync(body);
   }
 }
+
+export type OrderCreateBody = Awaited<ReturnType<OrderCreateInputBodyDto['act']>>;
+```
+
+CLI parsing (`parseArgs`) lives in the CLI handler, not the DTO — the DTO receives the already-parsed object:
+
+```ts
+// src/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli.ts
+const { values } = parseArgs({
+  args: args.slice(3),
+  options: { inactivityDays: { type: 'string', short: 'd' } },
+});
+const parsedArgs = await new PromoSendInputDto().act(values);
 ```
 
 ### Guard
