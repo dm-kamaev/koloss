@@ -61,11 +61,11 @@ Handler route `POST /order` — DTOs live in a `dto/` subdirectory per module:
 import type { FastifyInstance } from 'fastify';
 import { OrderCreateCtor } from '#/module/order/action/order_create.action';
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { AfterOrderCreate } from '../decorator/after_order_create.decorator';
-import { OrderCreateEmailNotify } from '../notification/order_create_email.notify';
-import { OrderCreateMetric } from '../metric/order_create_metric.metric';
-import { UserExistGuard } from '../guard/user_exist.guard';
-import { OrderCreateInputBodyDto, OrderCreateBody } from '../dto/order_create_input.dto';
+import { AfterOrderCreate } from '#order/decorator/after_order_create.decorator';
+import { OrderCreateEmailNotify } from '#order/notification/order_create_email.notify';
+import { OrderCreateMetric } from '#order/metric/order_create_metric.metric';
+import { UserExistGuard } from '#order/guard/user_exist.guard';
+import { OrderCreateInputBodyDto, OrderCreateBody } from '#order/dto/order_create_input.dto';
 
 export function orderCreateHttp({
   app,
@@ -149,15 +149,9 @@ The consumer entry point (`src/consumer.ts`) connects via `kafkajs`, subscribes 
 ```ts
 // src/module/user/user.consumer.router.ts
 import { communicator } from '#/communicator';
-import { PromoCodeCreateToUserAfterFulfilledConditionPromotion } from '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
+import { ConsumerDescriptor } from '#/lib';
 
-export interface ConsumerEntry {
-  name: string;
-  topic: string;
-  handler: (payload: Record<string, unknown>) => Promise<void>;
-}
-
-export const userConsumers: ConsumerEntry[] = [
+export const userConsumers: ConsumerDescriptor[] = [
   {
     name: 'promoCodeSendToUserAfterFulfilledConditionPromotion',
     topic: 'order_metrics',
@@ -165,6 +159,10 @@ export const userConsumers: ConsumerEntry[] = [
       const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
         '#/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
       );
+      const { PromoCodeCreateToUserAfterFulfilledConditionPromotion } = await import(
+        '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action'
+      );
+
       await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
         PromoCodeCreateToUserAfterFulfilledConditionPromotion,
         orderCommunicator: communicator.order,
@@ -387,7 +385,7 @@ But recommendation use **class mixins** for building complexity entity:
 ```ts
 // src/module/order/entity/order.entity.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderProductRaw } from '../repository/order.db';
+import { OrderProductRaw } from '#order/repository/order.db';
 
 type Constructor<T = object> = new (...args: any[]) => T;
 
@@ -689,6 +687,230 @@ export function orderCreateHttp({
 
 Guards throw `AppError` subclasses (e.g. `NotFound`) on failure, which are caught by Fastify's error handler.
 
+## Entry point
+The application has three entry points — one per runtime mode: HTTP server, CLI runner, and Kafka consumer. They are invoked directly (`node` + `import.meta.url` guard) and share the same module structure.
+
+### HTTP
+Creates a http server (**Fastify**) with route registration and error handling.
+
+```ts
+// src/http.ts
+
+import { fileURLToPath } from 'node:url';
+import Fastify, { FastifyInstance } from 'fastify';
+
+import { AppError } from '#/core/error/app.error';
+import { mountUserRoutes } from '#user/user.http.router';
+import { mountOrderRoutes } from '#order/order.http.router';
+
+import { communicator } from '#/communicator';
+
+export const appErrorLogger = {
+  error: console.error,
+};
+
+export function createApp() {
+  const app = Fastify();
+  setupErrorHandler(app);
+
+  return app;
+}
+
+// Register routes
+function mountRoutes(app: FastifyInstance) {
+  // pass communicator
+  mountUserRoutes({ app, orderCommunicator: communicator.order });
+  mountOrderRoutes({ app, userCommunicator: communicator.user });
+
+  return app;
+}
+
+function setupErrorHandler(app: FastifyInstance) {
+  app.setErrorHandler((error, _request, reply) => {
+    appErrorLogger.error(error);
+    if (error instanceof AppError) {
+      error.pipeTo(reply);
+    } else {
+      reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+}
+
+function startServer(app: FastifyInstance) {
+  app.listen({ port: 4005, host: '0.0.0.0' }, async function (err, address) {
+    if (err) {
+      throw err;
+    }
+    console.log('Server was started ' + address);
+  });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  startServer(mountRoutes(createApp()));
+}
+
+```
+
+`createApp()` is exported separately so middle-level tests can use `Fastify.inject()` without starting a real server. Routes are mounted statically at import time.
+
+### CLI
+Runs **named jobs** (manual or cron) using `parseArgs` from `node:util`.
+
+```ts
+// src/cli.ts
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { AsyncOK } from '#/lib';
+import { orderJobs } from '#/module/order/order.cli.router';
+import { userJobs } from '#/module/user/user.cli.router';
+
+// Register jobs from modules
+const jobs: Record<string, () => AsyncOK> = {
+  ...orderJobs,
+  ...userJobs,
+};
+
+export async function invokeCommand(args: string[] = process.argv) {
+  const { positionals } = parseArgs({
+    args: args.slice(2),
+    allowPositionals: true,
+    strict: false, // Prevent throwing on unknown options meant for the job
+  });
+
+  const taskName = positionals[0];
+
+  if (!taskName) {
+    console.error('Task name is required');
+    process.exit(1);
+  }
+
+  const job = jobs[taskName];
+
+  if (!job) {
+    throw new Error(`Task ${taskName} not found`);
+  }
+
+  await job();
+}
+
+async function runCli() {
+  try {
+    await invokeCommand();
+
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runCli();
+}
+```
+Jobs are registered in `*.cli.router.ts` files and merged into a single `Record<string, () => AsyncOK>`. Each job entry uses **dynamic `import()`** for lazy loading.
+
+```sh
+# Run a CLI job (dev)
+$ npx tsx src/cli.ts orderSuccessArchive --date 2024-01-01T12:00:00.000Z
+```
+
+### Consumer
+```ts
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { Kafka, EachMessagePayload } from 'kafkajs';
+import { ConsumerDescriptor } from '#/lib';
+import { userConsumers } from '#/module/user/user.consumer.router';
+
+// Register consumers
+const consumers: ConsumerDescriptor[] = [...userConsumers];
+
+export async function startConsumer(args: string[] = process.argv): Promise<void> {
+  const { positionals } = parseArgs({
+    args: args.slice(2),
+    allowPositionals: true,
+    strict: false,
+  });
+
+  const consumerName = positionals[0];
+
+  if (!consumerName) {
+    console.error('Consumer name is required');
+    process.exit(1);
+  }
+
+  const entry = consumers.find((c) => c.name === consumerName);
+
+  if (!entry) {
+    throw new Error(`Consumer ${consumerName} not found`);
+  }
+
+  const kafka = new Kafka({
+    clientId: 'koloss-consumer',
+    brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
+  });
+
+  const groupConsumer = kafka.consumer({ groupId: `koloss-consumer-${entry.name}` });
+  await groupConsumer.connect();
+
+  await groupConsumer.subscribe({ topic: entry.topic, fromBeginning: false });
+  console.log(`Subscribed to topic: ${entry.topic}`);
+
+  await groupConsumer.run({
+    eachMessage: async ({ topic, message }: EachMessagePayload) => {
+      const payload = JSON.parse(message.value!.toString()) as Record<string, unknown>;
+
+      try {
+        await entry.handler(payload);
+      } catch (error) {
+        console.error(`Handler for topic ${topic} failed:`, error);
+      }
+    },
+  });
+
+  console.log(`### Consumer ${entry.name} started ####\n\n`);
+
+  await new Promise<void>((resolve) => {
+    const shutdown = async () => {
+      console.log('Shutting down consumer...');
+      await groupConsumer.disconnect();
+      resolve();
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+  });
+}
+
+async function runConsumer() {
+  try {
+    await startConsumer();
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runConsumer();
+}
+```
+
+Connects to **Kafka** via `kafkajs` and runs a named consumer indefinitely.
+```
+startConsumer(args) — Parses positional arg[0] as consumer name,
+                      matches against ConsumerDescriptor[], subscribes to topic,
+                      runs eachMessage handler
+```
+
+```sh
+# Run a consumer (dev)
+$ npx tsx src/consumer.ts promoCodeSendToUserAfterFulfilledConditionPromotion
+```
+
+
 ## Don't use services
 There are **no generic Service classes**. Each concern is a **concrete class** with a single `act()` method:
 - `OrderCreateEmailNotify` — sends email
@@ -711,9 +933,9 @@ Fake approach
 ```ts
 // test/fake/communicator.ts
 import { AppCommunicator } from '#/communicator';
-import { UserCommunicatorFake } from './module/user/user.communicator';
+import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { OrderCommunicatorFake } from './module/order/order.communicator';
+import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
 
 export class AppCommunicatorFake extends AppCommunicator {
   private readonly UserCommunicator: typeof UserCommunicatorFake;
@@ -780,7 +1002,7 @@ In memory implementation of repository:
 ```ts
 // test/fake/module/order/repository/order.db.in_memory.fake.ts
 import { OrderDb, OrderRaw, OrderProductRaw } from '#/module/order/repository/order.db';
-import { UserDbInMemoryFake } from '../../user/repository/user.db.in_memory.fake';
+import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
 import { Order, OrderWithPrice } from '#/module/order/entity/order.entity';
 import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
 

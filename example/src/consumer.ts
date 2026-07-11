@@ -1,9 +1,10 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerEntry, userConsumers } from '#/module/user/user.consumer.router';
+import { ConsumerDescriptor } from '#/lib';
+import { userConsumers } from '#/module/user/user.consumer.router';
 
-const consumers: ConsumerEntry[] = [...userConsumers];
+const consumers: ConsumerDescriptor[] = [...userConsumers];
 
 export async function startConsumer(args: string[] = process.argv): Promise<void> {
   const { positionals } = parseArgs({

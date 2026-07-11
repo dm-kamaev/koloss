@@ -79,6 +79,12 @@ export class Factory {
 //   ) as T;
 // }
 
+export interface ConsumerDescriptor {
+  name: string;
+  topic: string;
+  handler: (payload: Record<string, unknown>) => Promise<void>;
+}
+
 export type SyncOK = { ok: true };
 export type AsyncOK = Promise<{ ok: true }>;
 
