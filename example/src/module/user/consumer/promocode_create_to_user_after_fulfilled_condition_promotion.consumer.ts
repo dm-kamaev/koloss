@@ -13,7 +13,7 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   orderCommunicator: IOrderCommunicator;
   payload: Record<string, unknown>;
 }): AsyncOK {
-  const parsedPayload = await new OrderCreatedEventDto(payload).act();
+  const parsedPayload = await new OrderCreatedEventDto().act(payload);
 
   await new PromoCodeSendToUserAfterFulfilledConditionPromotion(
     new PromoCodeCreateToUserAfterFulfilledConditionPromotion(orderCommunicator),

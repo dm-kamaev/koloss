@@ -19,7 +19,7 @@ export function orderCreateHttp({
   app.post<{
     Body: OrderCreateBody;
   }>('/order', async function handler(req, reply) {
-    const { user_id: userId, products } = await new OrderCreateInputBodyDto(req.body).act();
+    const { user_id: userId, products } = await new OrderCreateInputBodyDto().act(req.body);
 
     await new UserExistGuard(userCommunicator).act(userId);
 

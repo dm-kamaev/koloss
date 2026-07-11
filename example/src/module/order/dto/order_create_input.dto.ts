@@ -6,16 +6,16 @@ const ProductSchema = z.object({
   price: z.number().positive(),
 });
 
+const schema = z.object({
+  user_id: z.number(),
+  products: z.array(ProductSchema).min(1),
+});
+
 export class OrderCreateInputBodyDto {
-  constructor(private readonly body: unknown) {}
+  private readonly schema = schema;
 
-  private static schema = z.object({
-    user_id: z.number(),
-    products: z.array(ProductSchema).min(1),
-  });
-
-  async act() {
-    return OrderCreateInputBodyDto.schema.parseAsync(this.body);
+  async act(body: unknown) {
+    return this.schema.parseAsync(body);
   }
 }
 
