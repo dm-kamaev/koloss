@@ -37,6 +37,7 @@
   "imports": {
     "#user/*": "./dist/src/module/user/*.js",
     "#order/*": "./dist/src/module/order/*.js",
+    "#/lib": "./dist/src/lib/index.js",
     "#/*": "./dist/src/*.js"
   },
   "dependencies": {

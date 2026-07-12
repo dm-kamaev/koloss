@@ -1,5 +1,4 @@
 import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 type FactoryType<Instance, InputClass extends { new (...arg: any[]): Instance }> = (Class: InputClass) => Instance;
@@ -95,8 +94,8 @@ export type AsyncOK = Promise<{ ok: true }>;
 export const OK = { ok: true } as const;
 
 type RequireFunction = ReturnType<typeof createRequire>;
-export function createCjsRequire(filename?: string): RequireFunction {
-  return createRequire(filename ?? resolve(process.argv[1]));
+export function createCjsRequire(filename: string): RequireFunction {
+  return createRequire(filename);
 }
 
 export function isEntryPointESM(moduleURL: string): boolean {

@@ -3,7 +3,7 @@ import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { Factory, createCjsRequire } from '#/lib';
 
 // CommonJS approach to handle circular dependencies via dynamic require()
-const _require = createCjsRequire(__filename);
+const _require = createCjsRequire(import.meta.url);
 
 export interface ICommunicator {
   user: IUserCommunicator;

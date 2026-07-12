@@ -7,6 +7,7 @@ import { mountUserRoutes } from '#user/user.http.router';
 import { mountOrderRoutes } from '#order/order.http.router';
 
 import { communicator } from '#/communicator';
+import { isEntryPointESM } from '#/lib';
 
 export const appErrorLogger = {
   error: console.error,
@@ -46,4 +47,6 @@ export function startServer(app: FastifyInstance) {
   });
 }
 
-
+if (isEntryPointESM(import.meta.url)) {
+  startServer(mountRoutes(createApp()));
+}

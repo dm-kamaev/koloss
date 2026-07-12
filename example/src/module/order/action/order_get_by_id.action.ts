@@ -1,5 +1,5 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderDb } from '../repository/order.db';
+import { OrderDb } from '#order/repository/order.db';
 
 export class OrderGetById {
   constructor(

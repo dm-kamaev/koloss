@@ -1,5 +1,5 @@
-import { IUserCommunicator } from './communicator/user.communicator.type';
-import { IOrderCommunicator } from './communicator/order.communicator.type';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 
 export interface ICommunicator {
   user: IUserCommunicator;

@@ -1,9 +1,9 @@
 import { parseArgs } from 'node:util';
-import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '../action/promocode_create_to_users_didnt_make_order_for_too_long.action';
+import { PromoCodeCreateToUsersDidntMakeOrderForTooLongCtor } from '#user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { PromoCodeSendToUsersDidntMakeOrderForTooLong } from '#user/decorator/promocode_send_to_users_didnt_make_order_for_too_long.decorator';
 import { AsyncOK, OK } from '#/lib';
-import { PromoSendInputDto } from '../dto/promocode_send_input.dto';
+import { PromoSendInputDto } from '#user/dto/promocode_send_input.dto';
 
 export async function promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
   PromoCodeCreateToUsersDidntMakeOrderForTooLong,

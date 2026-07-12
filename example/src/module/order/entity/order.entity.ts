@@ -1,5 +1,5 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OrderProductRaw } from '../repository/order.db';
+import { OrderProductRaw } from '#order/repository/order.db';
 
 type Constructor<T = object> = new (...args: any[]) => T;
 

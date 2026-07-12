@@ -1,4 +1,4 @@
-import { kafkaInstance } from './kafka_client.instance';
+import { kafkaInstance } from '#/core/kafka/kafka_client.instance';
 
 export class KafkaProducer {
   constructor(private readonly kafka = kafkaInstance) {}

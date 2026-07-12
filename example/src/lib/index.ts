@@ -1,2 +1,2 @@
-export * from './main';
-export * from './main_test';
+export * from '#/lib/main';
+export * from '#/lib/main_test';

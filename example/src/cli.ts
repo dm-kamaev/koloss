@@ -44,6 +44,6 @@ async function runCli() {
   }
 }
 
-if (isEntryPointESM(import.meta)) {
+if (isEntryPointESM(import.meta.url)) {
   runCli();
 }

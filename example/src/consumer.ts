@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerDescriptor } from '#/lib';
+import { ConsumerDescriptor, isEntryPointESM } from '#/lib';
 import { userConsumers } from '#/module/user/user.consumer.router';
 
 const consumers: ConsumerDescriptor[] = [...userConsumers];
@@ -72,4 +72,6 @@ export async function runConsumer() {
   }
 }
 
-
+if (isEntryPointESM(import.meta.url)) {
+  runConsumer();
+}

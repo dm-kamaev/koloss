@@ -678,9 +678,10 @@ If you project use CommonJS as target module system:
 ```ts
 // Approach with common js:
 // Variant 1: Import type then require
-import type * as UserCommunicatorModule from './module/user/user.communicator';
+import type * as UserCommunicatorModule from '#user/module/user/user.communicator';
 
 get user(): IUserCommunicator {
+  // Variant 1: Import type then require
   const { UserCommunicator } = require('./module/user/user.communicator') as typeof UserCommunicatorModule;
   // Variant 2: require with import type at one moment
   const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');

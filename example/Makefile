@@ -1,29 +1,35 @@
 http.dev:
-	npx tsx src/entry/http.ts
+	npx tsx src/http.ts
+
 
 # make cli args="orderSuccessArchive --date 2024-01-01T12:00:00.000Z"
 # make cli args="promoCodeSendToUsersDidntMakeOrderForTooLong --inactivityDays 30"
 args=
 cli.dev:
-	npx tsx src/entry/cli.ts $(args)
+	npx tsx src/cli.ts $(args)
+
 
 cli:
-	docker compose exec backend node --enable-source-maps dist/src/entry/cli.js $(args)
+	docker compose exec backend node --enable-source-maps dist/src/cli.js $(args)
+
 
 # make consumer.dev args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer.dev:
-	npx tsx src/entry/consumer.ts $(args)
+	npx tsx src/consumer.ts $(args)
+
 
 # make consumer args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer:
-	docker compose exec backend node --enable-source-maps dist/src/entry/consumer.js $(args)
+	docker compose exec backend node --enable-source-maps dist/src/consumer.js $(args)
 
 
 check_ts:
 	npx tsc --noEmit
 
+
 lint:
 	npx eslint src/ test/
+
 
 build: check_ts
 	rm -rf dist;
@@ -34,15 +40,19 @@ service=
 down:
 	docker compose $(if $(service), rm -sf $(service), down)
 
+
 log:
 	docker compose logs -f --tail 100 | sed -u 's/^[^|]*[^ ]* //';
+
 
 file=
 test:
 	docker compose run --remove-orphans backend_dev npx jest $(file)
 
+
 up:
 	docker compose up --remove-orphans -d backend
+
 
 up.watch:
 	docker compose up backend
