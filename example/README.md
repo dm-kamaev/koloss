@@ -68,6 +68,7 @@ Most of the layers is optional.
 
 
 ### HTTP, CLI, Consumer and etc
+`*.http|cli|consumer.ts` like `controller` in famous frameworks
 
 #### HTTP
 Each HTTP handler is a **factory function** that receives `{ app, ActionCtor, communicator? }` and registers a Fastify route. Routers collect all handlers within a module:
