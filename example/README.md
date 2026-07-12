@@ -1,6 +1,10 @@
 # Koloss
 
-This is a **template project**. Use it as a reference and starting point for building other projects with the `koloss` approach.
+**Kolos** is template for creating a modular monolith (inspired DDD, Hexagonal/Onion/Clean Architecture and SOLID).
+Key items from the box:
+* A set of **application layers** for code splitting by area of responsibility: `HTTP/CLI/Consumer (Controller)`,`Action (Use Case)`,`Entity`, `Value Object`, `Repository` and etc
+* **Cross module communication** allows modules to be isolated from each other while still allowing them to reuse each other's functionality. This allows different team members to develop functionality in parallel by agreeing on a contract for interaction throught interfaces.
+* In addition, thanks to **lazy loading of modules** the problem of cyclic dependencies between him is completely solved. Besides lazy loading allows you to reduce consumption RAM and avoid loading unnecessary code which is extremely important in CLI/Cron tasks or in various consumer handlers (Kafka, RabbitMQ and etc).
 
 - [Layers](#layers)
   - [HTTP, CLI, Consumer and etc](#http-cli-consumer-and-etc)
