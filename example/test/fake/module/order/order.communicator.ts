@@ -1,5 +1,5 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib';
 import { OrderCommunicator } from '#/module/order/order.communicator';
 
 export class OrderCommunicatorFake extends OrderCommunicator {

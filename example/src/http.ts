@@ -1,6 +1,5 @@
 // ENTRY point for run http server
 
-import { fileURLToPath } from 'node:url';
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { AppError } from '#/core/error/app.error';
@@ -20,7 +19,7 @@ export function createApp() {
   return app;
 }
 
-function mountRoutes(app: FastifyInstance) {
+export function mountRoutes(app: FastifyInstance) {
   mountUserRoutes({ app, orderCommunicator: communicator.order });
   mountOrderRoutes({ app, userCommunicator: communicator.user });
 
@@ -38,7 +37,7 @@ function setupErrorHandler(app: FastifyInstance) {
   });
 }
 
-function startServer(app: FastifyInstance) {
+export function startServer(app: FastifyInstance) {
   app.listen({ port: 4005, host: '0.0.0.0' }, async function (err, address) {
     if (err) {
       throw err;
@@ -47,6 +46,4 @@ function startServer(app: FastifyInstance) {
   });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  startServer(mountRoutes(createApp()));
-}
+

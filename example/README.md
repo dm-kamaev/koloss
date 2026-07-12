@@ -68,10 +68,11 @@ Most of the layers is optional.
 
 
 ### HTTP, CLI, Consumer and etc
-`*.http|cli|consumer.ts` like `controller` in famous frameworks
+`*.http|cli|consumer.ts` like `controller` in famous frameworks.
+This is port(adapter) for processing requests coming from outside. This layer known about your http framework, approach of run cron/cli task or library which uses to consuming message from broker messageq or queues.
 
 #### HTTP
-Each HTTP handler is a **factory function** that receives `{ app, ActionCtor, communicator? }` and registers a Fastify route. Routers collect all handlers within a module:
+Each HTTP handler is a **factory function** that receives `{ app, ActionCtor, communicator? }`and registers a Fastify route. Routers collect all handlers within a module:
 
 ```ts
 // src/module/order/order.http.router.ts
@@ -235,10 +236,11 @@ export async function promoCodeSendToUserAfterFulfilledConditionPromotionConsume
   return OK;
 }
 ```
-
+Restrict invoke action class  directly from inside
 ### Action (UseCase)
-Actions (`/action`) are classes with a single public method `act()`. They may receive cross-module communicators and DB classes as constructor parameters (with defaults for DI). Each action also exports a `*Ctor` type alias:
+The main purpose of this layer (`/action`) is glue between external world and domain logic. Action class shouldn't contain context information about invoke like `request/response` (http) or `process.argv` (cli) and etc. This allowing reuse action classes in various scenario of invoke: http, cli, cron job or as consumer handler from message broker. It's forbidden invoke action directly from another action class.
 
+Actions (`/action`) are classes with a single public method `act()`. They may receive cross-module communicators and `Repositories` as constructor parameters (with defaults for DI). Each action also exports a `*Ctor` type alias for using in `*.http|cli|consumer.ts`:
 ```ts
 // src/module/order/action/order_create.action.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
@@ -564,8 +566,9 @@ Value object shouldn't use directly infrastructure. Infrastructure dependencies 
 
 
 ### Cross module communication
-Modules (`user`, `order`) communicate strictly through **communicator interfaces** (`src/communicator/*.communicator.type.ts`). No module directly imports another module's Actions, Repositories, or Entities.
+Modules (example: `user`, `order`) communicate strictly through **communicator interfaces** (`src/communicator/*.communicator.type.ts`). No module directly imports another module's `Actions`, `Repositories`, `Entities`, `Value Of Objects`.
 
+First step, you should declare interface which describe module public api which may use other modules in project:
 ```ts
 // src/communicator/user.communicator.type.ts
 export interface IUserCommunicator {
@@ -573,8 +576,7 @@ export interface IUserCommunicator {
   existUserWithId(userId: number): Promise<boolean>;
 }
 ```
-
-Class communicator can invoke only action class but can't directly use repository, entity and other code.
+Second step, you should implement realization of interface:
 ```ts
 // src/module/user/user.communicator.ts
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
@@ -598,19 +600,48 @@ export class UserCommunicator implements IUserCommunicator {
   }
 }
 ```
+Class communicator can invoke only `Action` class but can't directly use `Repository`, `Entity` and other layer from module.
 
-The central `AppCommunicator` (`src/communicator.ts`) uses **CommonJS `require()`** (via `createRequire`) at property-access time to handle circular dependencies between modules. Each getter lazily requires the module and wraps the communicator class via `Factory`:
+Third and final step, add module in app communicator  (`src/communicator.ts`).
+
+The central `AppCommunicator` uses **CommonJS `require()`** via `createCjsRequire` (because esm imports can't sync load module) at property-access time to handle circular dependencies between modules and allow lazy load. Each getter lazily requires the module and wraps the communicator class via `Factory`:
 
 ```ts
-get user(): IUserCommunicator {
-  const { UserCommunicator } = _require('./module/user/user.communicator');
-  return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
+// src/communicator.ts
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { Factory, createCjsRequire } from '#/lib';
+
+// CommonJS approach to handle circular dependencies via dynamic require()
+const _require = createCjsRequire(__filename);
+
+export interface ICommunicator {
+  user: IUserCommunicator;
+  order: IOrderCommunicator;
 }
+
+export class AppCommunicator implements ICommunicator {
+  constructor(protected readonly factory = new Factory()) {}
+
+  get user(): IUserCommunicator {
+    const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+    // create fresh instance
+    return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
+  }
+
+  get order(): IOrderCommunicator {
+    const { OrderCommunicator } = _require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
+    // create fresh instance
+    return this.factory.new(OrderCommunicator, (Class) => new Class(this.user));
+  }
+}
+
+export const communicator = new AppCommunicator();
 ```
 
-Communicator implementations (e.g. `src/module/user/user.communicator.ts`) delegate directly to Actions, receiving cross-module communicators via constructor injection.
+~~Communicator implementations (e.g. `src/module/user/user.communicator.ts`) delegate directly to Actions, receiving cross-module communicators via constructor injection.~~
 
-Example usage:
+Example usage `user.communicator.ts`:
 ```ts
 //src/module/order/action/order_get_by_id.action.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
@@ -630,6 +661,32 @@ export class OrderGetById {
 }
 
 export type OrderGetByIdCtor = typeof OrderGetById;
+```
+
+#### Lifetime
+Every call `this.userCommunicator.getUserById` take new instance of `UserCommunicator`:
+```ts
+this.factory.new(UserCommunicator, (Class) => new Class(this.order));
+```
+If you want use singleton `UserCommunicator`:
+```ts
+this.factory.singleton(UserCommunicator, (Class) => new Class(this.order));
+```
+
+#### CommonJS
+If you project use CommonJS as target module system:
+```ts
+// Approach with common js:
+// Variant 1: Import type then require
+import type * as UserCommunicatorModule from './module/user/user.communicator';
+
+get user(): IUserCommunicator {
+  const { UserCommunicator } = require('./module/user/user.communicator') as typeof UserCommunicatorModule;
+  // Variant 2: require with import type at one moment
+  const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+
+  return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
+}
 ```
 
 ### DTO

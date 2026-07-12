@@ -1,11 +1,3 @@
-// export type InstanceClassStub<InputClass extends new (...args: any[]) => any> = Partial<InstanceType<InputClass>>;
-
-// export function overridePropsOfObject<InputObject extends object>(instance: InputObject, stubs: Record<any, any>) {
-//   for (const [methodName, methodFn] of Object.entries(stubs)) {
-//     instance[methodName] = methodFn;
-//   }
-// }
-
 export function createFunctionStub<InputOriginalFunction extends (...args: any[]) => any>(_originalFunction: InputOriginalFunction) {
   return jest.fn() as unknown as jest.Mock<ReturnType<InputOriginalFunction>, Parameters<InputOriginalFunction>>;
 }
@@ -47,3 +39,11 @@ export function overridePropsOfObject<InputObject extends object>(instance: Inpu
     (instance as any)[methodName] = methodFn;
   }
 }
+
+// export type InstanceClassStub<InputClass extends new (...args: any[]) => any> = Partial<InstanceType<InputClass>>;
+
+// export function overridePropsOfObject<InputObject extends object>(instance: InputObject, stubs: Record<any, any>) {
+//   for (const [methodName, methodFn] of Object.entries(stubs)) {
+//     instance[methodName] = methodFn;
+//   }
+// }

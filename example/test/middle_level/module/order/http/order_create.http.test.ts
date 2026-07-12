@@ -4,7 +4,7 @@ import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
 import { createApp } from '#/http';
 import { AppError } from '#/core/error/app.error';
 import { NotFound } from '#/core/error/not_found.error';
-import { createMockClass } from '#/lib_test';
+import { createMockClass } from '#/lib';
 import { kafkaInstance } from '#/core/kafka/kafka_client.instance';
 import { emailClientInstance } from '#/core/email/email_client.instance';
 import { AppCommunicatorFake } from '#test/fake/communicator';

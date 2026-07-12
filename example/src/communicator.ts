@@ -1,11 +1,9 @@
-import { IUserCommunicator } from './communicator/user.communicator.type';
-import { IOrderCommunicator } from './communicator/order.communicator.type';
-import { Factory } from './lib';
-import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
+import { Factory, createCjsRequire } from '#/lib';
 
 // CommonJS approach to handle circular dependencies via dynamic require()
-const _require = typeof __filename !== 'undefined' ? createRequire(__filename) : createRequire(resolve(process.argv[1]));
+const _require = createCjsRequire(__filename);
 
 export interface ICommunicator {
   user: IUserCommunicator;

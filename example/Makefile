@@ -1,22 +1,22 @@
 http.dev:
-	npx tsx src/http.ts
+	npx tsx src/entry/http.ts
 
 # make cli args="orderSuccessArchive --date 2024-01-01T12:00:00.000Z"
 # make cli args="promoCodeSendToUsersDidntMakeOrderForTooLong --inactivityDays 30"
 args=
 cli.dev:
-	npx tsx src/cli.ts $(args)
+	npx tsx src/entry/cli.ts $(args)
 
 cli:
-	docker compose exec backend node --enable-source-maps dist/src/cli.js $(args)
+	docker compose exec backend node --enable-source-maps dist/src/entry/cli.js $(args)
 
 # make consumer.dev args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer.dev:
-	npx tsx src/consumer.ts $(args)
+	npx tsx src/entry/consumer.ts $(args)
 
 # make consumer args="promoCodeSendToUserAfterFulfilledConditionPromotion"
 consumer:
-	docker compose exec backend node --enable-source-maps dist/src/consumer.js $(args)
+	docker compose exec backend node --enable-source-maps dist/src/entry/consumer.js $(args)
 
 
 check_ts:

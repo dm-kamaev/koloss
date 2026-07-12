@@ -1,4 +1,4 @@
-import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib';
 import { UserDb } from '#/module/user/repository/user.db';
 import { UsersTable } from '#/core/pg/pg.type';
 import { Selectable } from 'kysely';

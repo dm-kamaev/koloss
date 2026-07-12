@@ -1,6 +1,6 @@
 import { Selectable } from 'kysely';
 import { UserDb, UserRow } from '#/module/user/repository/user.db';
-import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib';
 
 export class UserDbInMemoryFake extends UserDb {
   private _users: Selectable<UserRow>[] = [];

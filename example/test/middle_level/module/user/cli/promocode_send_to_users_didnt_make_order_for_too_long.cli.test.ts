@@ -3,7 +3,7 @@ import { testTransaction } from 'pg-transactional-tests';
 import { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } from '#/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli';
 import { emailClientInstance } from '#/core/email/email_client.instance';
 import { z } from 'zod';
-import { createMockClass } from '#/lib_test';
+import { createMockClass } from '#/lib';
 import { pgConnect } from '#/core/pg/pg.instance';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
