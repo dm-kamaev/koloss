@@ -19,6 +19,8 @@ This is a monorepo with two packages:
 | `make publish` | `npm publish --access public` |
 | `npm test` | Fails intentionally — no tests for the library |
 
+After making code changes, run `make check_ts test` to verify types and tests pass.
+
 ## Commands (example/)
 
 Run from `example/` directory:

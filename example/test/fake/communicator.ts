@@ -1,4 +1,4 @@
-import { AppCommunicator } from '#/communicator';
+import { AppCommunicator } from '#/entry/bootstrap/communicator';
 import { UserCommunicatorFake } from './module/user/user.communicator';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { OrderCommunicatorFake } from './module/order/order.communicator';

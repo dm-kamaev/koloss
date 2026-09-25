@@ -22,12 +22,14 @@ export class AppCommunicator implements ICommunicator {
     // Variant 2: require with import type at one moment
     // const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
 
-    const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+    const { UserCommunicator } = _require('../../module/user/user.communicator') as typeof import('../../module/user/user.communicator');
     return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
   }
 
   get order(): IOrderCommunicator {
-    const { OrderCommunicator } = _require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
+    const { OrderCommunicator } = _require(
+      '../../module/order/order.communicator',
+    ) as typeof import('../../module/order/order.communicator');
     return this.factory.new(OrderCommunicator, (Class) => new Class(this.user));
   }
 }

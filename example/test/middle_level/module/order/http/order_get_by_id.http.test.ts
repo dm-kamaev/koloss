@@ -1,6 +1,6 @@
 import { orderGetByIdHttp } from '#/module/order/http/order_get_by_id.http';
 import { OrderGetById } from '#/module/order/action/order_get_by_id.action';
-import { createApp } from '#/http';
+import { createApp } from '#/entry/http';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { FastifyInstance } from 'fastify';
 import { pgConnect } from '#/core/pg/pg.instance';

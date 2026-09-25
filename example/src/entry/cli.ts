@@ -2,12 +2,13 @@
 
 import { parseArgs } from 'node:util';
 import { AsyncOK, isEntryPointESM } from '#/lib';
+import { communicator } from '#/entry/bootstrap/communicator';
 import { orderJobs } from '#/module/order/order.cli.router';
 import { userJobs } from '#/module/user/user.cli.router';
 
 const jobs: Record<string, () => AsyncOK> = {
-  ...orderJobs,
-  ...userJobs,
+  ...orderJobs({ userCommunicator: communicator.user }),
+  ...userJobs({ orderCommunicator: communicator.order }),
 };
 
 export async function invokeCommand(args: string[] = process.argv) {

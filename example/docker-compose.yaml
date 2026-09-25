@@ -15,7 +15,7 @@ services:
       DB_PASSWORD: 'example'
       DB_NAME: 'koloss'
       KAFKA_BROKER: 'kafka-single:9093'
-    command: node --enable-source-maps dist/src/http.js
+    command: node --enable-source-maps dist/src/entry/http.js
     depends_on:
       - pg
       - kafka

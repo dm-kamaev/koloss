@@ -1,7 +1,7 @@
 import { orderCreateHttp } from '#/module/order/http/order_create.http';
 import { OrderCreate } from '#/module/order/action/order_create.action';
 import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
-import { createApp } from '#/http';
+import { createApp } from '#/entry/http';
 import { AppError } from '#/core/error/app.error';
 import { NotFound } from '#/core/error/not_found.error';
 import { createMockClass } from '#/lib';

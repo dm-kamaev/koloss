@@ -6,7 +6,7 @@ import { AppError } from '#/core/error/app.error';
 import { mountUserRoutes } from '#user/user.http.router';
 import { mountOrderRoutes } from '#order/order.http.router';
 
-import { communicator } from '#/communicator';
+import { communicator } from '#/entry/bootstrap/communicator';
 import { isEntryPointESM } from '#/lib';
 
 export const appErrorLogger = {

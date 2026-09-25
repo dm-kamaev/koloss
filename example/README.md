@@ -6,6 +6,10 @@ Key items from the box:
 * **Cross module communication** allows modules to be isolated from each other while still allowing them to reuse each other's functionality. This allows different team members to develop functionality in parallel by agreeing on a contract for interaction throught interfaces.
 * In addition, thanks to **lazy loading of modules** the problem of cyclic dependencies between him is completely solved. Besides lazy loading allows you to reduce consumption RAM and avoid loading unnecessary code which is extremely important in CLI/Cron tasks or in various consumer handlers (Kafka, RabbitMQ and etc).
 
+- [Entry point](#entry-point)
+  - [HTTP](#http-1)
+  - [CLI](#cli-1)
+  - [Consumer](#consumer-1)
 - [Layers](#layers)
   - [HTTP, CLI, Consumer and etc](#http-cli-consumer-and-etc)
     - [HTTP](#http)
@@ -19,10 +23,6 @@ Key items from the box:
   - [Cross module communication](#cross-module-communication)
   - [DTO](#dto)
   - [Guard](#guard)
-- [Entry point](#entry-point)
-  - [HTTP](#http-1)
-  - [CLI](#cli-1)
-  - [Consumer](#consumer-1)
 - [Don't use services](#dont-use-services)
 - [Shared code](#shared-code)
 - [Test](#test)
@@ -36,6 +36,238 @@ Key items from the box:
   - [Per-call instantiation](#per-call-instantiation)
   - [Communicators are the only cross-module API](#communicators-are-the-only-cross-module-api)
 - [TODO](#todo)
+
+## Entry point
+The application has three entry points — one per runtime mode: HTTP server, CLI runner, and Kafka consumer. They live in the `src/entry/` folder and detect direct execution via `isEntryPointESM(import.meta.url)`:
+
+- `http.ts` — Fastify HTTP server entry point.
+- `cli.ts` — CLI/cron job runner entry point.
+- `consumer.ts` — Kafka consumer entry point.
+- `bootstrap/communicator.ts` — shared `AppCommunicator` singleton for lazy cross-module access (not an entry point).
+- `bootstrap/communicator_proxy_version.ts` — experimental Proxy-based alternative to `bootstrap/communicator.ts` (not an entry point).
+
+### HTTP
+Creates a http server (**Fastify**) with route registration and error handling.
+
+```ts
+// src/entry/http.ts
+
+import { fileURLToPath } from 'node:url';
+import Fastify, { FastifyInstance } from 'fastify';
+
+import { AppError } from '#/core/error/app.error';
+import { mountUserRoutes } from '#user/user.http.router';
+import { mountOrderRoutes } from '#order/order.http.router';
+
+import { communicator } from '#/entry/bootstrap/communicator';
+
+export const appErrorLogger = {
+  error: console.error,
+};
+
+export function createApp() {
+  const app = Fastify();
+  setupErrorHandler(app);
+
+  return app;
+}
+
+// Register routes
+function mountRoutes(app: FastifyInstance) {
+  // pass communicator
+  mountUserRoutes({ app, orderCommunicator: communicator.order });
+  mountOrderRoutes({ app, userCommunicator: communicator.user });
+
+  return app;
+}
+
+function setupErrorHandler(app: FastifyInstance) {
+  app.setErrorHandler((error, _request, reply) => {
+    appErrorLogger.error(error);
+    if (error instanceof AppError) {
+      error.pipeTo(reply);
+    } else {
+      reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+}
+
+function startServer(app: FastifyInstance) {
+  app.listen({ port: 4005, host: '0.0.0.0' }, async function (err, address) {
+    if (err) {
+      throw err;
+    }
+    console.log('Server was started ' + address);
+  });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  startServer(mountRoutes(createApp()));
+}
+
+```
+
+`createApp()` is exported separately so middle-level tests can use `Fastify.inject()` without starting a real server. Routes are mounted statically at import time.
+
+### CLI
+Runs **named jobs** (manual or cron) using `parseArgs` from `node:util`.
+
+```ts
+// src/entry/cli.ts
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { AsyncOK } from '#/lib';
+import { communicator } from '#/entry/bootstrap/communicator';
+import { orderJobs } from '#/module/order/order.cli.router';
+import { userJobs } from '#/module/user/user.cli.router';
+
+// Register jobs from modules
+const jobs: Record<string, () => AsyncOK> = {
+  ...orderJobs({ userCommunicator: communicator.user }),
+  ...userJobs({ orderCommunicator: communicator.order }),
+};
+
+export async function invokeCommand(args: string[] = process.argv) {
+  const { positionals } = parseArgs({
+    args: args.slice(2),
+    allowPositionals: true,
+    strict: false, // Prevent throwing on unknown options meant for the job
+  });
+
+  const taskName = positionals[0];
+
+  if (!taskName) {
+    console.error('Task name is required');
+    process.exit(1);
+  }
+
+  const job = jobs[taskName];
+
+  if (!job) {
+    throw new Error(`Task ${taskName} not found`);
+  }
+
+  await job();
+}
+
+async function runCli() {
+  try {
+    await invokeCommand();
+
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runCli();
+}
+```
+Jobs are registered in `*.cli.router.ts` files and merged into a single `Record<string, () => AsyncOK>`. Each job entry uses **dynamic `import()`** for lazy loading.
+
+```sh
+# Run a CLI job (dev)
+$ npx tsx src/entry/cli.ts orderSuccessArchive --date 2024-01-01T12:00:00.000Z
+```
+
+### Consumer
+```ts
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { Kafka, EachMessagePayload } from 'kafkajs';
+import { ConsumerDescriptor } from '#/lib';
+import { communicator } from '#/entry/bootstrap/communicator';
+import { userConsumers } from '#/module/user/user.consumer.router';
+
+// Register consumers
+const consumers: ConsumerDescriptor[] = [...userConsumers({ orderCommunicator: communicator.order })];
+
+export async function startConsumer(args: string[] = process.argv): Promise<void> {
+  const { positionals } = parseArgs({
+    args: args.slice(2),
+    allowPositionals: true,
+    strict: false,
+  });
+
+  const consumerName = positionals[0];
+
+  if (!consumerName) {
+    console.error('Consumer name is required');
+    process.exit(1);
+  }
+
+  const entry = consumers.find((c) => c.name === consumerName);
+
+  if (!entry) {
+    throw new Error(`Consumer ${consumerName} not found`);
+  }
+
+  const kafka = new Kafka({
+    clientId: 'koloss-consumer',
+    brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
+  });
+
+  const groupConsumer = kafka.consumer({ groupId: `koloss-consumer-${entry.name}` });
+  await groupConsumer.connect();
+
+  await groupConsumer.subscribe({ topic: entry.topic, fromBeginning: false });
+  console.log(`Subscribed to topic: ${entry.topic}`);
+
+  await groupConsumer.run({
+    eachMessage: async ({ topic, message }: EachMessagePayload) => {
+      const payload = JSON.parse(message.value!.toString()) as Record<string, unknown>;
+
+      try {
+        await entry.handler(payload);
+      } catch (error) {
+        console.error(`Handler for topic ${topic} failed:`, error);
+      }
+    },
+  });
+
+  console.log(`### Consumer ${entry.name} started ####\n\n`);
+
+  await new Promise<void>((resolve) => {
+    const shutdown = async () => {
+      console.log('Shutting down consumer...');
+      await groupConsumer.disconnect();
+      resolve();
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+  });
+}
+
+async function runConsumer() {
+  try {
+    await startConsumer();
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runConsumer();
+}
+```
+
+Connects to **Kafka** via `kafkajs` and runs a named consumer indefinitely.
+```
+startConsumer(args) — Parses positional arg[0] as consumer name,
+                      matches against ConsumerDescriptor[], subscribes to topic,
+                      runs eachMessage handler
+```
+
+```sh
+# Run a consumer (dev)
+$ npx tsx src/entry/consumer.ts promoCodeSendToUserAfterFulfilledConditionPromotion
+```
+
 
 ## Layers
 Every module (e.g. `src/module/user/`, `src/module/order/`) may contain some or all of these layers:
@@ -135,19 +367,21 @@ export function orderCreateHttp({
 ```
 
 #### CLI
-The CLI entry point (`src/cli.ts`) uses `parseArgs` from `node:util` to select a named job, then delegates. Routers register jobs with **dynamic `import()`** for lazy loading:
+The CLI entry point (`src/entry/cli.ts`) uses `parseArgs` from `node:util` to select a named job, then delegates. Routers register jobs with **dynamic `import()`** for lazy loading:
 ```ts
 // src/module/order/order.cli.router.ts
 import { AsyncOK } from '#/lib';
-import { communicator } from '#/communicator';
+import { IUserCommunicator } from '#/communicator/user.communicator.type';
 
-export const orderJobs: Record<string, () => AsyncOK> = {
-  orderSuccessArchive: async () => {
-    const { orderSuccessArchiveCli } = await import('#/module/order/cli/order_success_archive.cli');
-    const { OrderSuccessArchive } = await import('#/module/order/action/order_success_archive.action');
-    return await orderSuccessArchiveCli({ OrderSuccessArchive, userCommunicator: communicator.user, args: process.argv });
-  },
-};
+export function orderJobs({ userCommunicator }: { userCommunicator: IUserCommunicator }): Record<string, () => AsyncOK> {
+  return {
+    orderSuccessArchive: async () => {
+      const { orderSuccessArchiveCli } = await import('#/module/order/cli/order_success_archive.cli');
+      const { OrderSuccessArchive } = await import('#/module/order/action/order_success_archive.action');
+      return await orderSuccessArchiveCli({ OrderSuccessArchive, userCommunicator, args: process.argv });
+    },
+  };
+}
 ```
 Lazy load module (`import`) provides loading only needed dependencies. It reduce memory consumtion and increase isolation code in runtime.
 Otherwise, running one command will load all commands and all modules for them.
@@ -179,32 +413,34 @@ return await action.act(parsedArgs.date);
 ```
 
 #### Consumer
-The consumer entry point (`src/consumer.ts`) connects via `kafkajs`, subscribes to a topic, and runs `eachMessage`. Consumer routers define entries:
+The consumer entry point (`src/entry/consumer.ts`) connects via `kafkajs`, subscribes to a topic, and runs `eachMessage`. Consumer routers define entries:
 ```ts
 // src/module/user/user.consumer.router.ts
-import { communicator } from '#/communicator';
 import { ConsumerDescriptor } from '#/lib';
+import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 
-export const userConsumers: ConsumerDescriptor[] = [
-  {
-    name: 'promoCodeSendToUserAfterFulfilledConditionPromotion',
-    topic: 'order_metrics',
-    handler: async (payload) => {
-      const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
-        '#/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
-      );
-      const { PromoCodeCreateToUserAfterFulfilledConditionPromotion } = await import(
-        '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action'
-      );
+export function userConsumers({ orderCommunicator }: { orderCommunicator: IOrderCommunicator }): ConsumerDescriptor[] {
+  return [
+    {
+      name: 'promoCodeSendToUserAfterFulfilledConditionPromotion',
+      topic: 'order_metrics',
+      handler: async (payload) => {
+        const { promoCodeSendToUserAfterFulfilledConditionPromotionConsumer } = await import(
+          '#/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer'
+        );
+        const { PromoCodeCreateToUserAfterFulfilledConditionPromotion } = await import(
+          '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action'
+        );
 
-      await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
-        PromoCodeCreateToUserAfterFulfilledConditionPromotion,
-        orderCommunicator: communicator.order,
-        payload,
-      });
+        await promoCodeSendToUserAfterFulfilledConditionPromotionConsumer({
+          PromoCodeCreateToUserAfterFulfilledConditionPromotion,
+          orderCommunicator,
+          payload,
+        });
+      },
     },
-  },
-];
+  ];
+}
 ```
 Lazy load module (`import`) provides loading only needed dependencies. It reduce memory consumtion and increase isolation code in runtime. Otherwise, running one consumer will load all consumer and all modules for them.
 
@@ -602,12 +838,12 @@ export class UserCommunicator implements IUserCommunicator {
 ```
 Class communicator can invoke only `Action` class but can't directly use `Repository`, `Entity` and other layer from module.
 
-Third and final step, add module in app communicator  (`src/communicator.ts`).
+Third and final step, add module in app communicator  (`src/entry/bootstrap/communicator.ts`).
 
 The central `AppCommunicator` uses **CommonJS `require()`** via `createCjsRequire` (because esm imports can't sync load module) at property-access time to handle circular dependencies between modules and allow lazy load. Each getter lazily requires the module and wraps the communicator class via `Factory`:
 
 ```ts
-// src/communicator.ts
+// src/entry/bootstrap/communicator.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { Factory, createCjsRequire } from '#/lib';
@@ -624,13 +860,13 @@ export class AppCommunicator implements ICommunicator {
   constructor(protected readonly factory = new Factory()) {}
 
   get user(): IUserCommunicator {
-    const { UserCommunicator } = _require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+    const { UserCommunicator } = _require('../module/user/user.communicator') as typeof import('../module/user/user.communicator');
     // create fresh instance
     return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
   }
 
   get order(): IOrderCommunicator {
-    const { OrderCommunicator } = _require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
+    const { OrderCommunicator } = _require('../module/order/order.communicator') as typeof import('../module/order/order.communicator');
     // create fresh instance
     return this.factory.new(OrderCommunicator, (Class) => new Class(this.user));
   }
@@ -682,9 +918,9 @@ import type * as UserCommunicatorModule from '#user/module/user/user.communicato
 
 get user(): IUserCommunicator {
   // Variant 1: Import type then require
-  const { UserCommunicator } = require('./module/user/user.communicator') as typeof UserCommunicatorModule;
+  const { UserCommunicator } = require('../module/user/user.communicator') as typeof UserCommunicatorModule;
   // Variant 2: require with import type at one moment
-  const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+  const { UserCommunicator } = require('../module/user/user.communicator') as typeof import('../module/user/user.communicator');
 
   return this.factory.new(UserCommunicator, (Class) => new Class(this.order));
 }
@@ -779,230 +1015,6 @@ export function orderCreateHttp({
 
 Guards throw `AppError` subclasses (e.g. `NotFound`) on failure, which are caught by Fastify's error handler.
 
-## Entry point
-The application has three entry points — one per runtime mode: HTTP server, CLI runner, and Kafka consumer. They are invoked directly (`node` + `import.meta.url` guard) and share the same module structure.
-
-### HTTP
-Creates a http server (**Fastify**) with route registration and error handling.
-
-```ts
-// src/http.ts
-
-import { fileURLToPath } from 'node:url';
-import Fastify, { FastifyInstance } from 'fastify';
-
-import { AppError } from '#/core/error/app.error';
-import { mountUserRoutes } from '#user/user.http.router';
-import { mountOrderRoutes } from '#order/order.http.router';
-
-import { communicator } from '#/communicator';
-
-export const appErrorLogger = {
-  error: console.error,
-};
-
-export function createApp() {
-  const app = Fastify();
-  setupErrorHandler(app);
-
-  return app;
-}
-
-// Register routes
-function mountRoutes(app: FastifyInstance) {
-  // pass communicator
-  mountUserRoutes({ app, orderCommunicator: communicator.order });
-  mountOrderRoutes({ app, userCommunicator: communicator.user });
-
-  return app;
-}
-
-function setupErrorHandler(app: FastifyInstance) {
-  app.setErrorHandler((error, _request, reply) => {
-    appErrorLogger.error(error);
-    if (error instanceof AppError) {
-      error.pipeTo(reply);
-    } else {
-      reply.code(500).send({ error: 'Internal Server Error' });
-    }
-  });
-}
-
-function startServer(app: FastifyInstance) {
-  app.listen({ port: 4005, host: '0.0.0.0' }, async function (err, address) {
-    if (err) {
-      throw err;
-    }
-    console.log('Server was started ' + address);
-  });
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  startServer(mountRoutes(createApp()));
-}
-
-```
-
-`createApp()` is exported separately so middle-level tests can use `Fastify.inject()` without starting a real server. Routes are mounted statically at import time.
-
-### CLI
-Runs **named jobs** (manual or cron) using `parseArgs` from `node:util`.
-
-```ts
-// src/cli.ts
-import { parseArgs } from 'node:util';
-import { fileURLToPath } from 'node:url';
-import { AsyncOK } from '#/lib';
-import { orderJobs } from '#/module/order/order.cli.router';
-import { userJobs } from '#/module/user/user.cli.router';
-
-// Register jobs from modules
-const jobs: Record<string, () => AsyncOK> = {
-  ...orderJobs,
-  ...userJobs,
-};
-
-export async function invokeCommand(args: string[] = process.argv) {
-  const { positionals } = parseArgs({
-    args: args.slice(2),
-    allowPositionals: true,
-    strict: false, // Prevent throwing on unknown options meant for the job
-  });
-
-  const taskName = positionals[0];
-
-  if (!taskName) {
-    console.error('Task name is required');
-    process.exit(1);
-  }
-
-  const job = jobs[taskName];
-
-  if (!job) {
-    throw new Error(`Task ${taskName} not found`);
-  }
-
-  await job();
-}
-
-async function runCli() {
-  try {
-    await invokeCommand();
-
-    process.exit(0);
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
-  }
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  runCli();
-}
-```
-Jobs are registered in `*.cli.router.ts` files and merged into a single `Record<string, () => AsyncOK>`. Each job entry uses **dynamic `import()`** for lazy loading.
-
-```sh
-# Run a CLI job (dev)
-$ npx tsx src/cli.ts orderSuccessArchive --date 2024-01-01T12:00:00.000Z
-```
-
-### Consumer
-```ts
-import { parseArgs } from 'node:util';
-import { fileURLToPath } from 'node:url';
-import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerDescriptor } from '#/lib';
-import { userConsumers } from '#/module/user/user.consumer.router';
-
-// Register consumers
-const consumers: ConsumerDescriptor[] = [...userConsumers];
-
-export async function startConsumer(args: string[] = process.argv): Promise<void> {
-  const { positionals } = parseArgs({
-    args: args.slice(2),
-    allowPositionals: true,
-    strict: false,
-  });
-
-  const consumerName = positionals[0];
-
-  if (!consumerName) {
-    console.error('Consumer name is required');
-    process.exit(1);
-  }
-
-  const entry = consumers.find((c) => c.name === consumerName);
-
-  if (!entry) {
-    throw new Error(`Consumer ${consumerName} not found`);
-  }
-
-  const kafka = new Kafka({
-    clientId: 'koloss-consumer',
-    brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
-  });
-
-  const groupConsumer = kafka.consumer({ groupId: `koloss-consumer-${entry.name}` });
-  await groupConsumer.connect();
-
-  await groupConsumer.subscribe({ topic: entry.topic, fromBeginning: false });
-  console.log(`Subscribed to topic: ${entry.topic}`);
-
-  await groupConsumer.run({
-    eachMessage: async ({ topic, message }: EachMessagePayload) => {
-      const payload = JSON.parse(message.value!.toString()) as Record<string, unknown>;
-
-      try {
-        await entry.handler(payload);
-      } catch (error) {
-        console.error(`Handler for topic ${topic} failed:`, error);
-      }
-    },
-  });
-
-  console.log(`### Consumer ${entry.name} started ####\n\n`);
-
-  await new Promise<void>((resolve) => {
-    const shutdown = async () => {
-      console.log('Shutting down consumer...');
-      await groupConsumer.disconnect();
-      resolve();
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-  });
-}
-
-async function runConsumer() {
-  try {
-    await startConsumer();
-    process.exit(0);
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
-  }
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  runConsumer();
-}
-```
-
-Connects to **Kafka** via `kafkajs` and runs a named consumer indefinitely.
-```
-startConsumer(args) — Parses positional arg[0] as consumer name,
-                      matches against ConsumerDescriptor[], subscribes to topic,
-                      runs eachMessage handler
-```
-
-```sh
-# Run a consumer (dev)
-$ npx tsx src/consumer.ts promoCodeSendToUserAfterFulfilledConditionPromotion
-```
-
-
 ## Don't use services
 There are **no generic Service classes**. Each concern is a **concrete class** with a single `act()` method:
 - `OrderCreateEmailNotify` — sends email
@@ -1024,7 +1036,7 @@ These are orchestrated by **Decorator** classes. Metrics and notification live i
 Fake approach
 ```ts
 // test/fake/communicator.ts
-import { AppCommunicator } from '#/communicator';
+import { AppCommunicator } from '#/entry/bootstrap/communicator';
 import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
@@ -1142,7 +1154,7 @@ Example test for http:
 import { orderCreateHttp } from '#/module/order/http/order_create.http';
 import { OrderCreate } from '#/module/order/action/order_create.action';
 import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
-import { createApp } from '#/http';
+import { createApp } from '#/entry/http';
 import { AppError } from '#/core/error/app.error';
 import { NotFound } from '#/core/error/not_found.error';
 import { createMockClass } from '#/lib_test';
@@ -1271,7 +1283,7 @@ describe('HTTP Order Create', () => {
 # Architecture Decisions
 
 ## Loading modules
-Async loading module not supported because `require` uses `Proxy` that decreases performance (code can't extract information about method). Instead, the app uses synchronous CommonJS `require()` via `createRequire` for lazy module loading. A Proxy-based alternative (`src/communicator_proxy_version.ts`) demonstrates the trade-off.
+Async loading module not supported because `require` uses `Proxy` that decreases performance (code can't extract information about method). Instead, the app uses synchronous CommonJS `require()` via `createRequire` for lazy module loading. A Proxy-based alternative (`src/entry/bootstrap/communicator_proxy_version.ts`) demonstrates the trade-off.
 
 - **HTTP**: Modules loaded statically at import time. Communicator lazily resolves cross-module dependencies on first property access.
 - **CLI**: Named job entries use dynamic `import()` to lazy-load the CLI handler and Action files only when invoked.

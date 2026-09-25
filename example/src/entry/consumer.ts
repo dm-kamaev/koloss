@@ -1,9 +1,10 @@
 import { parseArgs } from 'node:util';
 import { Kafka, EachMessagePayload } from 'kafkajs';
 import { ConsumerDescriptor, isEntryPointESM } from '#/lib';
+import { communicator } from '#/entry/bootstrap/communicator';
 import { userConsumers } from '#/module/user/user.consumer.router';
 
-const consumers: ConsumerDescriptor[] = [...userConsumers];
+const consumers: ConsumerDescriptor[] = [...userConsumers({ orderCommunicator: communicator.order })];
 
 export async function startConsumer(args: string[] = process.argv): Promise<void> {
   const { positionals } = parseArgs({

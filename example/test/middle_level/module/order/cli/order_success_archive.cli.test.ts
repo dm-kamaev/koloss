@@ -29,7 +29,7 @@ describe('CLI: orderSuccessArchive', () => {
     const oneHourAgo = new Date(now.getTime() - 3_600_000);
     const twoDaysAgo = new Date(now.getTime() - 172_800_000);
     const date = oneHourAgo.toISOString();
-    const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', date];
+    const args = ['node', 'src/entry/cli.ts', 'orderSuccessArchive', '--date', date];
 
     const orderDb = new OrderDbFake();
 
@@ -75,7 +75,7 @@ describe('CLI: orderSuccessArchive [Validation]', () => {
 
   it('should throw a ZodError for an invalid date format', async () => {
     const invalidDate = 'not-a-date';
-    const args = ['node', 'src/cli.ts', 'orderSuccessArchive', '--date', invalidDate];
+    const args = ['node', 'src/entry/cli.ts', 'orderSuccessArchive', '--date', invalidDate];
 
     await expect(
       orderSuccessArchiveCli({
@@ -87,7 +87,7 @@ describe('CLI: orderSuccessArchive [Validation]', () => {
   });
 
   it('should throw a ZodError if date is missing (now required)', async () => {
-    const args = ['node', 'src/cli.ts', 'orderSuccessArchive'];
+    const args = ['node', 'src/entry/cli.ts', 'orderSuccessArchive'];
 
     await expect(
       orderSuccessArchiveCli({

@@ -1,8 +1,8 @@
 import { testTransaction } from 'pg-transactional-tests';
 import { userGetByIdHttp } from '#/module/user/http/user_get_by_id.http';
 import { UserGetById } from '#/module/user/action/user_get_by_id.action';
-import { createApp } from '#/http';
-import { AppCommunicator } from '#/communicator';
+import { createApp } from '#/entry/http';
+import { AppCommunicator } from '#/entry/bootstrap/communicator';
 import { pgConnect } from '#/core/pg/pg.instance';
 import { FastifyInstance } from 'fastify';
 import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';

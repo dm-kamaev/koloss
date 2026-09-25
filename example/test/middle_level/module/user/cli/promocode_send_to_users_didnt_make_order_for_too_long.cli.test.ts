@@ -62,7 +62,7 @@ describe('CLI: promoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
       },
     });
 
-    const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30']; // Inactivity threshold: 30 days
+    const args = ['node', 'src/entry/cli.ts', 'promoSend', '-d', '30']; // Inactivity threshold: 30 days
 
     // Act
     const result = await promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
@@ -94,7 +94,7 @@ describe('CLI: promoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
       },
     });
 
-    const args = ['node', 'src/cli.ts', 'promoSend', '-d', '30'];
+    const args = ['node', 'src/entry/cli.ts', 'promoSend', '-d', '30'];
 
     // Act
     const result = await promoCodeCreateToUsersDidntMakeOrderForTooLongCli({
@@ -120,7 +120,7 @@ describe('CLI: promoSend [Validation]', () => {
   });
 
   it('should throw a ZodError for invalid inactivityDays format', async () => {
-    const args = ['node', 'src/cli.ts', 'promoSend', '-d', 'not-a-number'];
+    const args = ['node', 'src/entry/cli.ts', 'promoSend', '-d', 'not-a-number'];
 
     // Act
     await expect(
@@ -133,7 +133,7 @@ describe('CLI: promoSend [Validation]', () => {
   });
 
   it('should throw a ZodError if inactivityDays is missing', async () => {
-    const args = ['node', 'src/cli.ts', 'promoSend'];
+    const args = ['node', 'src/entry/cli.ts', 'promoSend'];
 
     // Act
     await expect(

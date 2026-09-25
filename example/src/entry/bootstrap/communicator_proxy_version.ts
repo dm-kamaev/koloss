@@ -77,7 +77,7 @@ const communicatorInternal: ICommunicator = {
 
 communicatorInternal.user = createLazyModuleProxy<IUserCommunicator>(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { UserCommunicator } = require('./module/user/user.communicator') as typeof import('./module/user/user.communicator');
+  const { UserCommunicator } = require('../../module/user/user.communicator') as typeof import('../../module/user/user.communicator');
   console.log('UserCommunicator was loaded', UserCommunicator);
 
   return createModule(UserCommunicator, (Class) => new Class(communicatorInternal.order));
@@ -85,7 +85,7 @@ communicatorInternal.user = createLazyModuleProxy<IUserCommunicator>(() => {
 
 communicatorInternal.order = createLazyModuleProxy<IOrderCommunicator>(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { OrderCommunicator } = require('./module/order/order.communicator') as typeof import('./module/order/order.communicator');
+  const { OrderCommunicator } = require('../../module/order/order.communicator') as typeof import('../../module/order/order.communicator');
   console.log('OrderCommunicator was loaded', OrderCommunicator);
 
   return createModule(OrderCommunicator, (Class) => new Class(communicatorInternal.user));
