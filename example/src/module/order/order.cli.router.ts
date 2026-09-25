@@ -1,4 +1,4 @@
-import { AsyncOK } from '#/lib';
+import { AsyncOK } from '#/lib/lib';
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 
 export function orderJobs({ userCommunicator }: { userCommunicator: IUserCommunicator }): Record<string, () => AsyncOK> {

@@ -1,4 +1,4 @@
-import { AsyncOK, OK } from '#/lib';
+import { AsyncOK, OK } from '#/lib/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { PromoCodeCreateToUserAfterFulfilledConditionPromotionCtor } from '#user/action/promocode_create_to_user_after_fulfilled_condition_promotion.action';
 import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '#user/decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator';

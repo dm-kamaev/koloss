@@ -1,5 +1,5 @@
-import { pgConnect } from '#/core/pg/pg.instance';
-import { OrdersTable, SchemaDB } from '#/core/pg/pg.type';
+import { pgConnect } from '#/lib/pg/pg.instance';
+import { OrdersTable, SchemaDB } from '#/lib/pg/pg.type';
 import { Order, OrderWithPrice } from '#order/entity/order.entity';
 import { Selectable } from 'kysely';
 

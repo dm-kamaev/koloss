@@ -1,5 +1,5 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { OK } from '#/lib';
+import { OK } from '#/lib/lib';
 import { OrderDb } from '#order/repository/order.db';
 
 export class OrderSuccessArchive {

@@ -3,7 +3,7 @@ import { OrderGetById } from '#/module/order/action/order_get_by_id.action';
 import { createApp } from '#/entry/http';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { FastifyInstance } from 'fastify';
-import { pgConnect } from '#/core/pg/pg.instance';
+import { pgConnect } from '#/lib/pg/pg.instance';
 import { testTransaction } from 'pg-transactional-tests';
 import { OrderDbFake } from '#test/fake/module/order/repository/order.db.fake';
 

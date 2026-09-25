@@ -1,6 +1,6 @@
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { Factory, createCjsRequire } from '#/lib';
+import { Factory, createCjsRequire } from '#/lib/lib';
 
 // CommonJS approach to handle circular dependencies via dynamic require()
 const _require = createCjsRequire(import.meta.url);

@@ -54,7 +54,7 @@ Creates a http server (for example **Fastify.js**) with route registration and e
 import { fileURLToPath } from 'node:url';
 import Fastify, { FastifyInstance } from 'fastify';
 
-import { AppError } from '#/core/error/app.error';
+import { AppError } from '#/lib/error/app.error';
 import { mountUserRoutes } from '#user/user.http.router';
 import { mountOrderRoutes } from '#order/order.http.router';
 
@@ -115,7 +115,7 @@ Runs **named jobs** (manual or cron) using `parseArgs` from `node:util`.
 // src/entry/cli.ts
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { AsyncOK } from '#/lib';
+import { AsyncOK } from '#/lib/lib';
 import { communicator } from '#/entry/bootstrap/communicator';
 import { orderJobs } from '#/module/order/order.cli.router';
 import { userJobs } from '#/module/user/user.cli.router';
@@ -176,7 +176,7 @@ $ npx tsx src/entry/cli.ts orderSuccessArchive --date 2024-01-01T12:00:00.000Z
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerDescriptor } from '#/lib';
+import { ConsumerDescriptor } from '#/lib/lib';
 import { communicator } from '#/entry/bootstrap/communicator';
 import { userConsumers } from '#/module/user/user.consumer.router';
 
@@ -369,7 +369,7 @@ export function orderCreateHttp({
 The CLI entry point (`src/entry/cli.ts`) uses `parseArgs` from `node:util` to select a named job, then delegates. Routers register jobs with **dynamic `import()`** for lazy loading:
 ```ts
 // src/module/order/order.cli.router.ts
-import { AsyncOK } from '#/lib';
+import { AsyncOK } from '#/lib/lib';
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 
 export function orderJobs({ userCommunicator }: { userCommunicator: IUserCommunicator }): Record<string, () => AsyncOK> {
@@ -415,7 +415,7 @@ return await action.act(parsedArgs.date);
 The consumer entry point (`src/entry/consumer.ts`) connects via `kafkajs`, subscribes to a topic, and runs `eachMessage`. Consumer routers define entries:
 ```ts
 // src/module/user/user.consumer.router.ts
-import { ConsumerDescriptor } from '#/lib';
+import { ConsumerDescriptor } from '#/lib/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 
 export function userConsumers({ orderCommunicator }: { orderCommunicator: IOrderCommunicator }): ConsumerDescriptor[] {
@@ -446,7 +446,7 @@ Lazy load module (`import`) provides loading only needed dependencies. It reduce
 Consumer handlers validate payloads with a class-based DTO pattern and delegate to decorator-wrapped actions:
 ```ts
 // src/module/user/consumer/promocode_create_to_user_after_fulfilled_condition_promotion.consumer.ts
-import { AsyncOK, OK } from '#/lib';
+import { AsyncOK, OK } from '#/lib/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { PromoCodeSendToUserAfterFulfilledConditionPromotion } from '#user/decorator/promocode_send_to_user_after_fulfilled_condition_promotion.decorator';
 import { OrderCreatedEventDto } from '#user/dto/order_created_event.dto';
@@ -598,16 +598,16 @@ export class LogOutput<T extends { act(...arg: any[]): Promise<any> }> {
 
 
 ### Repository
-Layer for persist and extract data from different storages ()`/repository`): MySQL, Postgres, Redis, S3, File system, External API and etc. The main task of repository is isolation other application layers from details of storage.
+Layer for persist and extract data from different storages (`/repository`): MySQL, Postgres, Redis, S3, File system, External API and etc. The main task of repository is isolation other application layers from details of storage.
 Only this layer known about how load and persist data with sql,http api or use .somehow else.
 
 Example repository (`user.db.ts`) with **Kysely** query builder on PostgreSQL. Each repository creates its own DB connection via `pgConnect.create()`.
 
 ```ts
 // src/module/user/repository/user.db.ts
-import { NotFound } from '#/core/error/not_found.error';
-import { SchemaDB, UsersTable } from '#/core/pg/pg.type';
-import { pgConnect } from '#/core/pg/pg.instance';
+import { NotFound } from '#/lib/error/not_found.error';
+import { SchemaDB, UsersTable } from '#/lib/pg/pg.type';
+import { pgConnect } from '#/lib/pg/pg.instance';
 import { Selectable } from 'kysely';
 
 export type UserRow = Selectable<UsersTable>;
@@ -845,7 +845,7 @@ The central `AppCommunicator` uses **CommonJS `require()`** via `createCjsRequir
 // src/entry/bootstrap/communicator.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
-import { Factory, createCjsRequire } from '#/lib';
+import { Factory, createCjsRequire } from '#/lib/lib';
 
 // CommonJS approach to handle circular dependencies via dynamic require()
 const _require = createCjsRequire(__filename);
@@ -873,8 +873,6 @@ export class AppCommunicator implements ICommunicator {
 
 export const communicator = new AppCommunicator();
 ```
-
-~~Communicator implementations (e.g. `src/module/user/user.communicator.ts`) delegate directly to Actions, receiving cross-module communicators via constructor injection.~~
 
 Example usage `user.communicator.ts`:
 ```ts
@@ -976,7 +974,7 @@ Authorization guards are instantiated inline in HTTP handlers:
 ```ts
 // src/module/order/guard/user_exist.guard.ts
 import { IUserCommunicator } from '#/communicator/user.communicator.type';
-import { NotFound } from '#/core/error/not_found.error';
+import { NotFound } from '#/lib/error/not_found.error';
 
 export class UserExistGuard {
   constructor(private readonly userCommunicator: IUserCommunicator) {}
@@ -1024,12 +1022,12 @@ These are orchestrated by **Decorator** classes. Metrics and notification live i
 
 ## Shared code
 
-- **`src/lib.ts`** — The `Factory` class creates proxy objects where every method call creates a **fresh instance** of the class (per-call instantiation). Use `factory.singleton()` to cache instances. Exports `OK = { ok: true } as const`, `SyncOK` (type), and `AsyncOK` (type).
-- **`src/lib_test.ts`** — Test helpers: `createMockClass()`, `createFunctionStub()`, `createClassStub()`, `overridePropsOfObject()`, and the `StubPropOfInstance<InputClass>` type.
-- **`src/core/error/`** — `AppError` hierarchy with `pipeTo(FastifyReply)`, `getHttpCode()`, `toJSON()`. Includes `NotFound`.
-- **`src/core/pg/`** — `PgConnect` (Kysely + pg Pool singleton), Kysely table types.
-- **`src/core/kafka/`** — `KafkaClient` / `KafkaProducer` singleton wrappers.
-- **`src/core/email/`** — `EmailClient` / `EmailSdk` (stub that logs to console).
+- **`src/lib/lib/main.ts`** — The `Factory` class creates proxy objects where every method call creates a **fresh instance** of the class (per-call instantiation). Use `factory.singleton()` to cache instances. Exports `OK = { ok: true } as const`, `SyncOK` (type), and `AsyncOK` (type).
+- **`src/lib/lib/main_test.ts`** — Test helpers: `createMockClass()`, `createFunctionStub()`, `createClassStub()`, `overridePropsOfObject()`, and the `StubPropOfInstance<InputClass>` type.
+- **`src/lib/error/`** — `AppError` hierarchy with `pipeTo(FastifyReply)`, `getHttpCode()`, `toJSON()`. Includes `NotFound`.
+- **`src/lib/pg/`** — `PgConnect` (Kysely + pg Pool singleton), Kysely table types.
+- **`src/lib/kafka/`** — `KafkaClient` / `KafkaProducer` singleton wrappers.
+- **`src/lib/email/`** — `EmailClient` / `EmailSdk` (stub that logs to console).
 
 ## Test
 Fake approach
@@ -1107,7 +1105,7 @@ In memory implementation of repository:
 import { OrderDb, OrderRaw, OrderProductRaw } from '#/module/order/repository/order.db';
 import { UserDbInMemoryFake } from '#test/fake/module/user/repository/user.db.in_memory.fake';
 import { Order, OrderWithPrice } from '#/module/order/entity/order.entity';
-import { overridePropsOfObject, StubPropOfInstance } from '#/lib_test';
+import { overridePropsOfObject, StubPropOfInstance } from '#/lib/lib';
 
 export class OrderDbInMemoryFake extends OrderDb {
   static readonly defaultOrder: OrderRaw = {
@@ -1154,14 +1152,14 @@ import { orderCreateHttp } from '#/module/order/http/order_create.http';
 import { OrderCreate } from '#/module/order/action/order_create.action';
 import { UserCommunicatorFake } from '#test/fake/module/user/user.communicator';
 import { createApp } from '#/entry/http';
-import { AppError } from '#/core/error/app.error';
-import { NotFound } from '#/core/error/not_found.error';
-import { createMockClass } from '#/lib_test';
-import { kafkaInstance } from '#/core/kafka/kafka_client.instance';
-import { emailClientInstance } from '#/core/email/email_client.instance';
+import { AppError } from '#/lib/error/app.error';
+import { NotFound } from '#/lib/error/not_found.error';
+import { createMockClass } from '#/lib/lib';
+import { kafkaInstance } from '#/lib/kafka/kafka_client.instance';
+import { emailClientInstance } from '#/lib/email/email_client.instance';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { FastifyInstance } from 'fastify';
-import { pgConnect } from '#/core/pg/pg.instance';
+import { pgConnect } from '#/lib/pg/pg.instance';
 import { testTransaction } from 'pg-transactional-tests';
 import { OrderDbFake } from '#test/fake/module/order/repository/order.db.fake';
 

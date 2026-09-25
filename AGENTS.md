@@ -69,7 +69,7 @@ UserWithOrdersCount(UserWithEmail(User, email), count)
 ```
 
 ### Error handling
-Custom `AppError` hierarchy in `src/core/error/`. Has `pipeTo(FastifyReply)` and `getHttpCode()` methods. Fastify error handler in `src/http.ts` uses `appErrorLogger.error`.
+Custom `AppError` hierarchy in `src/lib/error/`. Has `pipeTo(FastifyReply)` and `getHttpCode()` methods. Fastify error handler in `src/http.ts` uses `appErrorLogger.error`.
 
 ## Testing
 

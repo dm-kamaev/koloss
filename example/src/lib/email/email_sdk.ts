@@ -1,4 +1,4 @@
-import { emailClientInstance } from '#/core/email/email_client.instance';
+import { emailClientInstance } from '#/lib/email/email_client.instance';
 
 export class EmailSdk {
   constructor(private readonly emailClient = emailClientInstance) {}

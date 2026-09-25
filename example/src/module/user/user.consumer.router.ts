@@ -1,4 +1,4 @@
-import { ConsumerDescriptor } from '#/lib';
+import { ConsumerDescriptor } from '#/lib/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 
 export function userConsumers({ orderCommunicator }: { orderCommunicator: IOrderCommunicator }): ConsumerDescriptor[] {

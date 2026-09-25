@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { DB, SchemaDB } from '#/core/pg/pg.type';
+import { DB, SchemaDB } from '#/lib/pg/pg.type';
 
 export interface PgConnectConfig {
   host: string;

@@ -1,7 +1,7 @@
 // ENTRY point for run task vi cli or by cron
 
 import { parseArgs } from 'node:util';
-import { AsyncOK, isEntryPointESM } from '#/lib';
+import { AsyncOK, isEntryPointESM } from '#/lib/lib';
 import { communicator } from '#/entry/bootstrap/communicator';
 import { orderJobs } from '#/module/order/order.cli.router';
 import { userJobs } from '#/module/user/user.cli.router';

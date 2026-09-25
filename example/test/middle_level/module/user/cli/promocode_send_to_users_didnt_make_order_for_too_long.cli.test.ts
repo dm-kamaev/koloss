@@ -1,10 +1,10 @@
-import { OK } from '#/lib';
+import { OK } from '#/lib/lib';
 import { testTransaction } from 'pg-transactional-tests';
 import { promoCodeCreateToUsersDidntMakeOrderForTooLongCli } from '#/module/user/cli/promocode_send_to_users_didnt_make_order_for_too_long.cli';
-import { emailClientInstance } from '#/core/email/email_client.instance';
+import { emailClientInstance } from '#/lib/email/email_client.instance';
 import { z } from 'zod';
-import { createMockClass } from '#/lib';
-import { pgConnect } from '#/core/pg/pg.instance';
+import { createMockClass } from '#/lib/lib';
+import { pgConnect } from '#/lib/pg/pg.instance';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicator';
 import { UserDbFake } from '#test/fake/module/user/repository/user.db fake';

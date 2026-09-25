@@ -1,10 +1,10 @@
-import { OK } from '#/lib';
+import { OK } from '#/lib/lib';
 import { testTransaction } from 'pg-transactional-tests';
 import { orderSuccessArchiveCli } from '#/module/order/cli/order_success_archive.cli';
 import { OrderSuccessArchive } from '#/module/order/action/order_success_archive.action';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { z } from 'zod';
-import { pgConnect } from '#/core/pg/pg.instance';
+import { pgConnect } from '#/lib/pg/pg.instance';
 import { OrderDbFake } from '#test/fake/module/order/repository/order.db.fake';
 
 describe('CLI: orderSuccessArchive', () => {

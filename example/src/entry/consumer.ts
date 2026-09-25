@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
 import { Kafka, EachMessagePayload } from 'kafkajs';
-import { ConsumerDescriptor, isEntryPointESM } from '#/lib';
+import { ConsumerDescriptor, isEntryPointESM } from '#/lib/lib';
 import { communicator } from '#/entry/bootstrap/communicator';
 import { userConsumers } from '#/module/user/user.consumer.router';
 

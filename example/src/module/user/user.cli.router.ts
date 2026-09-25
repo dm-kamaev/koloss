@@ -1,4 +1,4 @@
-import { AsyncOK } from '#/lib';
+import { AsyncOK } from '#/lib/lib';
 import { IOrderCommunicator } from '#/communicator/order.communicator.type';
 import { PromoCodeCreateToUsersDidntMakeOrderForTooLong } from '#user/action/promocode_create_to_users_didnt_make_order_for_too_long.action';
 

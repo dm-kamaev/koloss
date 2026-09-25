@@ -1,4 +1,4 @@
-import { EmailSdk } from '#/core/email/email_sdk';
+import { EmailSdk } from '#/lib/email/email_sdk';
 import { UserWithEmailInstance } from '#user/entity/user.entity';
 
 export class UserPromoCode {

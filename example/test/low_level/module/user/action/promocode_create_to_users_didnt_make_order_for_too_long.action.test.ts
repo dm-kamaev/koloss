@@ -4,7 +4,7 @@ import { OrderCommunicatorFake } from '#test/fake/module/order/order.communicato
 import { OrderRaw } from '#/module/order/repository/order.db';
 import { AppCommunicatorFake } from '#test/fake/communicator';
 import { UserPromoCode } from '#/module/user/value_object/user_promocode.value_object';
-import { emailClientInstance } from '#/core/email/email_client.instance';
+import { emailClientInstance } from '#/lib/email/email_client.instance';
 
 describe('PromoCodeCreateToUsersDidntMakeOrderForTooLong', () => {
   beforeEach(() => {
