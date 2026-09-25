@@ -40,14 +40,13 @@ Key items from the box:
 ## Entry point
 The application has three entry points — one per runtime mode: HTTP server, CLI runner, and Kafka consumer. They live in the `src/entry/` folder and detect direct execution via `isEntryPointESM(import.meta.url)`:
 
-- `http.ts` — Fastify HTTP server entry point.
+- `http.ts` — HTTP server entry point.
 - `cli.ts` — CLI/cron job runner entry point.
 - `consumer.ts` — Kafka consumer entry point.
-- `bootstrap/communicator.ts` — shared `AppCommunicator` singleton for lazy cross-module access (not an entry point).
-- `bootstrap/communicator_proxy_version.ts` — experimental Proxy-based alternative to `bootstrap/communicator.ts` (not an entry point).
+- [`bootstrap/communicator.ts`](#cross-module-communication) — shared `AppCommunicator` singleton for lazy cross-module access.
 
 ### HTTP
-Creates a http server (**Fastify**) with route registration and error handling.
+Creates a http server (for example **Fastify.js**) with route registration and error handling.
 
 ```ts
 // src/entry/http.ts
